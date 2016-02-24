@@ -30,262 +30,262 @@ var savedName string
 %%
 
 program             : declaration_list              {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("program0: %+v %v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 declaration_list    : declaration_list declaration  {
-                                                      fmt.Printf("%+v %+v\n", $1, $2)
+                                                      fmt.Printf("declaration_list0: %+v %+v %v\n", $1, $2, currStr(yylex))
                                                     }
                     | declaration                   {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("declaration_list1: %+v %v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 declaration         : var_declaration               {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("declaration0: %+v %v\n", $1, currStr(yylex))
                                                     }
                     | fun_declaration               {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("declaration1: %+v %v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 var_declaration     : type_specifier ID SEMI        {
-                                                      fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+                                                      fmt.Printf("var_declaration0: %+v %+v %+v %v\n", $1, $2, $3, currStr(yylex))
                                                     }
                     | type_specifier ID LBRACKET NUM RBRACKET SEMI
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6)
+                                                      fmt.Printf("var_declaration1: %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, currStr(yylex))
                                                     }
                     ;
 
 type_specifier      : INT                           {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("type_specifier0: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | VOID                          {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("type_specifier1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6)
+                                                      fmt.Printf("fun_declaration0: %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, currStr(yylex))
                                                     }
                     ;
 
 params              : param_list                    {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("params0: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | VOID                          {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("params1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 param_list          : param_list COMMA param        {
-                                                      fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+                                                      fmt.Printf("param_list0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
 																										}
                     | param                         {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("param_list1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 param               : type_specifier ID             {
-                                                      fmt.Printf("%+v %+v\n", $1, $2)
+                                                      fmt.Printf("param0: %+v %+v %+v\n", $1, $2, currStr(yylex))
 																										}
                     | type_specifier ID LBRACKET RBRACKET
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v\n", $1, $2, $3, $3)
+                                                      fmt.Printf("param1: %+v %+v %+v %+v %+v\n", $1, $2, $3, $3, currStr(yylex))
 																										}
                     ;
 
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v\n", $1, $2, $3, $4)
+                                                      fmt.Printf("compound_stmt0: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, currStr(yylex))
 																										}
                     ;
 
 local_declarations  : local_declarations var_declaration
                                                     {
-                                                      fmt.Printf("%+v %+v\n", $1, $2)
+                                                      fmt.Printf("local_declarations0: %+v %+v %+v\n", $1, $2, currStr(yylex))
 																										}
                     | empty                         {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("local_declarations1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 statement_list      : statement_list statement      {
-                                                      fmt.Printf("%+v %+v\n", $1, $2)
+                                                      fmt.Printf("statement_list0: %+v %+v %+v\n", $1, $2, currStr(yylex))
 																										}
                     | empty                         {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("statement_list1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 statement           : expression_stmt               {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("statement0: %+v %+v", $1, currStr(yylex))
 																										}
                     | compound_stmt                 {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("statement1: %+v %+v", $1, currStr(yylex))
 																										}
                     | selection_stmt                {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("statement2: %+v %+v", $1, currStr(yylex))
 																										}
                     | iteration_stmt                {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("statement3: %+v %+v", $1, currStr(yylex))
 																										}
                     | return_stmt                   {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("statement4: %+v %+v", $1, currStr(yylex))
 																										}
                     ;
 
 expression_stmt     : expression SEMI               {
-                                                      fmt.Printf("%+v %+v", $1, $2)
+                                                      fmt.Printf("expression_stmt0: %+v %+v %+v", $1, $2, currStr(yylex))
 																										}
                     | SEMI                          {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("expression_stmt1: %+v %+v", $1, currStr(yylex))
 																										}
                     ;
 
 selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v %+v", $1, $2, $3, $4, $5)
+                                                      fmt.Printf("selection_stmt0: %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, currStr(yylex))
 																										}
                     | IF LPAREN expression RPAREN statement ELSE statement
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v %+v %+v %+v", $1, $2, $3, $4, $5, $6, $7)
+                                                      fmt.Printf("selection_stmt1: %+v %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, $7, currStr(yylex))
 																										}
                     ;
 
 iteration_stmt      : WHILE LPAREN expression RPAREN statement
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v %+v", $1, $2, $3, $4, $5)
+                                                      fmt.Printf("iteration_stmt0: %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, currStr(yylex))
 																										}
                     ;
 
 return_stmt         : RETURN SEMI                   {
-                                                      fmt.Printf("%+v %+v", $1, $2)
+                                                      fmt.Printf("return_stmt0: %+v %+v %+v\n", $1, $2, currStr(yylex))
 																										}
                     | RETURN expression SEMI        {
-                                                      fmt.Printf("%+v %+v %+v", $1, $2, $3)
+                                                      fmt.Printf("return_stmt1: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
                                                     }
                     ;
 
 expression          : var ASSIGN expression         {
-                                                      fmt.Printf("%+v %+v %+v", $1, $2, $3)
+                                                      fmt.Printf("expression0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
                                                     }
                     | simple_expression             {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("expression1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 var                 : ID                            {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("var0: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | ID LBRACKET expression RBRACKET
                                                     {
-                                                      fmt.Printf("%+v %+v %+v %+v", $1, $2, $3, $4)
+                                                      fmt.Printf("var1: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, currStr(yylex))
                                                     }
                     ;
 
 simple_expression   : additive_expression relop additive_expression
                                                     {
-                                                      fmt.Printf("%+v %+v %+v", $1, $2, $3)
+                                                      fmt.Printf("simple_expression0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
                                                     }
                     | additive_expression           {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("simple_expression1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 relop               : LTE                           {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop0: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | LT                            {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | GT                            {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop2: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | GTE                           {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop3: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     | EQ                            {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop4: %+v %+v\nv", $1, currStr(yylex))
                                                     }
                     | NEQ                           {
-                                                      fmt.Printf("%+v", $1)
+                                                      fmt.Printf("relop5: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 additive_expression : additive_expression addop term
                                                     {
-																											fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+																											fmt.Printf("additive_expression0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
 																										}
                     | term                          {
-																											fmt.Printf("%+v %+v %+v\n", $1)
+																											fmt.Printf("additive_expression1: %+v %+v %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 addop               : PLUS                          {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("addop0: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | MINUS                         {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("addop1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 term                : term mulop factor             {
-																											fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+																											fmt.Printf("term0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
 																										}
                     | factor                        {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("term1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 mulop               : TIMES                         {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("mulop0: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | OVER                          {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("mulop1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 factor              : LPAREN expression RPAREN      {
-																											fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+																											fmt.Printf("factor0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
 																										}
                     | var                           {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("factor1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | call                          {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("factor2: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | NUM                           {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("factor3: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 call                : ID LPAREN args RPAREN         {
-																											fmt.Printf("%+v %+v %+v %+v\n", $1, $2, $3, $4)
+																											fmt.Printf("call0: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, currStr(yylex))
 																										}
                     ;
 
 args                : args_list                     {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("args0: %+v %+v\n", $1, currStr(yylex))
 																										}
                     | empty                         {
-																											fmt.Printf("%+v\n", $1)
+																											fmt.Printf("args1: %+v %+v\n", $1, currStr(yylex))
 																										}
                     ;
 
 args_list           : args_list COMMA expression    {
-                                                      fmt.Printf("%+v %+v %+v\n", $1, $2, $3)
+                                                      fmt.Printf("args_list0: %+v %+v %+v %+v\n", $1, $2, $3, currStr(yylex))
                                                     }
                     | expression                    {
-                                                      fmt.Printf("%+v\n", $1)
+                                                      fmt.Printf("args_list1: %+v %+v\n", $1, currStr(yylex))
                                                     }
                     ;
 
 empty               : /* empty */                   {
-                                                      fmt.Printf("empty\n")
+                                                      fmt.Printf("empty0: %+v\n", currStr(yylex))
                                                     }
                     ;
 
@@ -307,4 +307,7 @@ func currCol(y yyLexer) int {
     return y.(*Lexer).stack[0].column
   }
   return 0
+}
+func currStr(y yyLexer) string {
+  return fmt.Sprintf("%+v [%+v:%+v]", currText(y), currLine(y), currCol(y))
 }
