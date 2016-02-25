@@ -50,6 +50,8 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		}
 	}
 
+	fmt.Println(l)
+
 	if l.tok != scanner.EOF {
 		return l.GetTok(lval, l.text)
 	}
@@ -61,7 +63,7 @@ func (l *Lexer) Error(e string) {
 }
 
 func (l Lexer) String() string {
-	return fmt.Sprintf("%s [%+v]", l.file.Name(), l.scan.Pos())
+	return fmt.Sprintf("%s [%+v] (%s)", l.file.Name(), l.scan.Pos(), l.scan.TokenText())
 }
 
 func (l Lexer) GetTok(lval *yySymType, str string) int {
