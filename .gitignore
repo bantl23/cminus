@@ -1,4 +1,3 @@
 cminus
-cminus.nn.go
-y.go
-y.output
+cminus.y.go
+cminus.y.output

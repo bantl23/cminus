@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
 
-go get github.com/blynn/nex
-nex cminus.nex
-go tool yacc cminus.y
+go tool yacc -o cminus.y.go -v cminus.y.output cminus.y
 go build
