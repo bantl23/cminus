@@ -221,7 +221,7 @@ additive_expression : additive_expression addop term
 																											fmt.Printf("additive_expression0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
 																										}
                     | term                          {
-																											fmt.Printf("additive_expression1: %+v %+v %+v %+v\n", $1, yylex)
+																											fmt.Printf("additive_expression1: %+v %+v\n", $1, yylex)
 																										}
                     ;
 
