@@ -1,185 +1,245 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
-	"regexp"
-	"text/scanner"
+	"unicode"
+)
+
+type LexerState int
+
+const (
+	LEX_START LexerState = iota
+	LEX_COMMENT_FIRST
+	LEX_COMMENT
+	LEX_COMMENT_STAR
+	LEX_NUM
+	LEX_ID
+	LEX_NEQ
+	LEX_EQ
+	LEX_LTE
+	LEX_GTE
+	LEX_DONE
 )
 
 type Lexer struct {
-	file       *os.File
-	scan       scanner.Scanner
-	pos        scanner.Position
-	text       string
-	tok        rune
-	id         *regexp.Regexp
-	num        *regexp.Regexp
-	commentBeg string
-	commentEnd string
+	file   *os.File
+	reader *bufio.Reader
+	row    int
+	col    int
+	txt    string
+	tok    rune
+	buf    []rune
+	state  LexerState
 }
 
 func NewLexer(f *os.File) *Lexer {
 	l := new(Lexer)
 	l.file = f
-	l.scan.Init(l.file)
-	l.pos = l.scan.Pos()
-	l.text = l.scan.TokenText()
-	l.tok = yyEofCode
-	l.id = regexp.MustCompile("[a-zA-Z]+")
-	l.num = regexp.MustCompile("[0-9]+")
-	l.commentBeg = "/*"
-	l.commentEnd = "*/"
+	l.reader = bufio.NewReader(l.file)
+	l.row = 1
+	l.col = 0
+	l.txt = ""
+	l.tok = 0
+	l.buf = make([]rune, 0)
+	l.state = LEX_START
 	return l
 }
 
-func (l *Lexer) readValue() {
-	l.pos = l.scan.Pos()
-	l.text = l.scan.TokenText()
-	l.tok = l.scan.Scan()
+func (l *Lexer) String() string {
+	return fmt.Sprintf("Lexer: %s, [%d:%d] (%s)", l.Name(), l.Row(), l.Col(), l.Text())
 }
 
 func (l *Lexer) Lex(lval *yySymType) int {
-	l.readValue()
-	if l.tok != scanner.EOF {
-		if l.text == l.commentBeg {
-			for l.text != l.commentEnd || l.tok != scanner.EOF {
-				l.readValue()
+	var value int = 0
+	l.state = LEX_START
+	for l.state != LEX_DONE {
+		var keep bool = true
+		var err error
+		l.tok, err = l.Read()
+		if err == nil {
+
+			if l.tok == '\n' {
+				l.row++
+				l.col = 0
 			}
-			l.readValue()
+			l.col++
+
+			switch l.state {
+			case LEX_START:
+				l.buf = make([]rune, 0)
+				if unicode.IsDigit(l.tok) {
+					l.state = LEX_NUM
+				} else if unicode.IsLetter(l.tok) {
+					l.state = LEX_ID
+				} else if l.tok == '!' {
+					l.state = LEX_NEQ
+				} else if l.tok == '=' {
+					l.state = LEX_EQ
+				} else if l.tok == '<' {
+					l.state = LEX_LTE
+				} else if l.tok == '>' {
+					l.state = LEX_GTE
+				} else if l.tok == '/' {
+					l.state = LEX_COMMENT_FIRST
+				} else if l.tok == ' ' || l.tok == '\t' || l.tok == '\n' {
+					keep = false
+				} else {
+					l.state = LEX_DONE
+					switch l.tok {
+					case '+':
+						value = PLUS
+					case '-':
+						value = MINUS
+					case '*':
+						value = TIMES
+					case ';':
+						value = SEMI
+					case '(':
+						value = LPAREN
+					case ')':
+						value = RPAREN
+					case '[':
+						value = LBRACKET
+					case ']':
+						value = RBRACKET
+					case '{':
+						value = LBRACE
+					case '}':
+						value = RBRACE
+					default:
+						keep = false
+						fmt.Printf("Error: unknown token %c\n", l.tok)
+					}
+				}
+			case LEX_NUM:
+				if unicode.IsDigit(l.tok) == false {
+					l.Unread()
+					l.state = LEX_DONE
+					value = NUM
+					keep = false
+				}
+			case LEX_ID:
+				if unicode.IsLetter(l.tok) == false {
+					l.Unread()
+					l.state = LEX_DONE
+					keep = false
+					switch string(l.buf) {
+					case "if":
+						value = IF
+					case "else":
+						value = ELSE
+					case "int":
+						value = INT
+					case "void":
+						value = VOID
+					case "while":
+						value = WHILE
+					default:
+						value = ID
+					}
+				}
+			case LEX_NEQ:
+				l.state = LEX_DONE
+				if l.tok == '=' {
+					value = NEQ
+				} else {
+					keep = false
+					fmt.Printf("Error: unknown token !%c\n", l.tok)
+				}
+			case LEX_EQ:
+				l.state = LEX_DONE
+				if l.tok == '=' {
+					value = EQ
+				} else {
+					value = ASSIGN
+				}
+			case LEX_LTE:
+				l.state = LEX_DONE
+				if l.tok == '=' {
+					value = LTE
+				} else {
+					value = LT
+				}
+			case LEX_GTE:
+				l.state = LEX_DONE
+				if l.tok == '=' {
+					value = GTE
+				} else {
+					value = GT
+				}
+			case LEX_COMMENT_FIRST:
+				if l.tok == '*' {
+					l.state = LEX_COMMENT_STAR
+				} else {
+					l.state = LEX_DONE
+					value = OVER
+				}
+			case LEX_COMMENT:
+				if l.tok == '*' {
+					l.state = LEX_COMMENT_STAR
+				}
+			case LEX_COMMENT_STAR:
+				if l.tok == '/' {
+					l.state = LEX_START
+				} else if l.tok == '*' {
+					l.state = LEX_COMMENT_STAR
+				} else {
+					l.state = LEX_COMMENT
+				}
+			case LEX_DONE:
+			default:
+				l.state = LEX_DONE
+				keep = false
+				fmt.Printf("Error: internal error, unknown state\n")
+			}
+		} else {
+			l.state = LEX_DONE
+			keep = false
+			if err != io.EOF {
+				fmt.Printf("Error: file read %s\n", err)
+			}
+		}
+
+		if keep == true {
+			l.buf = append(l.buf, l.tok)
+		}
+
+		if l.state == LEX_DONE {
+			lval.yys = value
+			lval.str = string(l.buf)
 		}
 	}
-
-	fmt.Println(l)
-
-	if l.tok != scanner.EOF {
-		return l.GetTok(lval, l.text)
-	}
-	return yyEofCode
+	return value
 }
 
 func (l *Lexer) Error(e string) {
-	fmt.Println("Error: ", l)
+	fmt.Printf("Error: %s\n", e)
 }
 
-func (l Lexer) String() string {
-	return fmt.Sprintf("%s [%+v] (%s)", l.file.Name(), l.scan.Pos(), l.scan.TokenText())
+func (l *Lexer) Read() (rune, error) {
+	r, _, err := l.reader.ReadRune()
+	return r, err
 }
 
-func (l Lexer) GetTok(lval *yySymType, str string) int {
-	switch str {
-	case "if":
-		lval.yys = IF
-		lval.str = str
-		return IF
-	case "else":
-		lval.yys = ELSE
-		lval.str = str
-		return ELSE
-	case "int":
-		lval.yys = INT
-		lval.str = str
-		return INT
-	case "return":
-		lval.yys = RETURN
-		lval.str = str
-		return RETURN
-	case "void":
-		lval.yys = VOID
-		lval.str = str
-		return VOID
-	case "while":
-		lval.yys = WHILE
-		lval.str = str
-		return WHILE
-	case "+":
-		lval.yys = PLUS
-		lval.str = str
-		return PLUS
-	case "-":
-		lval.yys = MINUS
-		lval.str = str
-		return MINUS
-	case "*":
-		lval.yys = TIMES
-		lval.str = str
-		return TIMES
-	case "/":
-		lval.yys = OVER
-		lval.str = str
-		return OVER
-	case "<":
-		lval.yys = LT
-		lval.str = str
-		return LT
-	case "<=":
-		lval.yys = LTE
-		lval.str = str
-		return LTE
-	case ">":
-		lval.yys = GT
-		lval.str = str
-		return GT
-	case ">=":
-		lval.yys = GTE
-		lval.str = str
-		return GTE
-	case "==":
-		lval.yys = EQ
-		lval.str = str
-		return EQ
-	case "!=":
-		lval.yys = NEQ
-		lval.str = str
-		return NEQ
-	case "=":
-		lval.yys = ASSIGN
-		lval.str = str
-		return ASSIGN
-	case ";":
-		lval.yys = SEMI
-		lval.str = str
-		return SEMI
-	case ",":
-		lval.yys = COMMA
-		lval.str = str
-		return COMMA
-	case "(":
-		lval.yys = LPAREN
-		lval.str = str
-		return LPAREN
-	case ")":
-		lval.yys = RPAREN
-		lval.str = str
-		return RPAREN
-	case "{":
-		lval.yys = LBRACE
-		lval.str = str
-		return LBRACE
-	case "}":
-		lval.yys = RBRACE
-		lval.str = str
-		return RBRACE
-	case "[":
-		lval.yys = LBRACKET
-		lval.str = str
-		return LBRACKET
-	case "]":
-		lval.yys = RBRACKET
-		lval.str = str
-		return RBRACKET
-	default:
-		if l.id.MatchString(str) {
-			lval.yys = ID
-			lval.str = str
-			return ID
-		} else if l.num.MatchString(str) {
-			lval.yys = NUM
-			lval.str = str
-			return NUM
-		}
-	}
-	lval.yys = yyErrCode
-	lval.str = "Invalid token"
-	return yyErrCode
+func (l *Lexer) Unread() error {
+	return l.reader.UnreadRune()
+}
+
+func (l *Lexer) Name() string {
+	return l.file.Name()
+}
+
+func (l *Lexer) Row() int {
+	return l.row
+}
+
+func (l *Lexer) Col() int {
+	return l.col - len(l.buf)
+}
+
+func (l *Lexer) Text() string {
+	return string(l.buf)
 }
