@@ -84,7 +84,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 					l.state = LEX_GTE
 				} else if l.tok == '/' {
 					l.state = LEX_COMMENT_FIRST
-				} else if l.tok == ' ' || l.tok == '\t' || l.tok == '\n' {
+				} else if unicode.IsSpace(l.tok) {
 					keep = false
 				} else {
 					l.state = LEX_DONE
@@ -109,9 +109,11 @@ func (l *Lexer) Lex(lval *yySymType) int {
 						value = LBRACE
 					case '}':
 						value = RBRACE
+					case ',':
+						value = COMMA
 					default:
 						keep = false
-						fmt.Printf("Error: unknown token %c\n", l.tok)
+						fmt.Printf("Error: unknown token [%+v]\n", l)
 					}
 				}
 			case LEX_NUM:
@@ -216,7 +218,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 }
 
 func (l *Lexer) Error(e string) {
-	fmt.Printf("Error: %s\n", e)
+	fmt.Printf("Error: %s [%+v]\n", e, l)
 }
 
 func (l *Lexer) Read() (rune, error) {
@@ -237,7 +239,7 @@ func (l *Lexer) Row() int {
 }
 
 func (l *Lexer) Col() int {
-	return l.col - len(l.buf)
+	return l.col
 }
 
 func (l *Lexer) Text() string {
