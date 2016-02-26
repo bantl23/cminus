@@ -1,5 +1,13 @@
-void main(void)
+/*
+  go away
+*/
+void main(int)
 {
-  int x;
-  int y;
+  /*
+    there
+  */
+  int x; /* */
+  /* */ int y;
+
+  z = x * y;
 }

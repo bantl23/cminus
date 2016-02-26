@@ -5,24 +5,41 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"unicode"
+	"regexp"
 )
 
-type LexerState int
+var regex *regexp.Regexp = regexp.MustCompile("(?P<BEG_COMMENT>\\/\\*)|" +
+	"(?P<END_COMMENT>\\*\\/)|" +
+	"(?P<IF>if)|" +
+	"(?P<ELSE>else)`|" +
+	"(?P<INT>int)|" +
+	"(?P<VOID>void)|" +
+	"(?P<WHILE>while)|" +
+	"(?P<NEQ>!=)|" +
+	"(?P<EQ>==)|" +
+	"(?P<LTE><=)|" +
+	"(?P<GTE>>=)|" +
+	"(?P<ASSIGN>=)|" +
+	"(?P<LT><)|" +
+	"(?P<GT>>)|" +
+	"(?P<PLUS>\\+)|" +
+	"(?P<MINUS>-)|" +
+	"(?P<TIMES>\\*)|" +
+	"(?P<OVER>\\/)|" +
+	"(?P<LPAREN>\\()|" +
+	"(?P<RPAREN>\\))|" +
+	"(?P<LBRACKET>\\[)|" +
+	"(?P<RBRACKET>\\])|" +
+	"(?P<LBRACE>\\{)|" +
+	"(?P<RBRACE>\\})|" +
+	"(?P<COMMA>,)|" +
+	"(?P<SEMI>;)|" +
+	"(?P<NUM>[0-9]+)|" +
+	"(?P<ID>[a-zA-Z]+)|" +
+	"(?P<WHITESPACE>[ \\t]+)" +
+	"(?P<NEWLINE>\\n)")
 
-const (
-	LEX_START LexerState = iota
-	LEX_COMMENT_FIRST
-	LEX_COMMENT
-	LEX_COMMENT_STAR
-	LEX_NUM
-	LEX_ID
-	LEX_NEQ
-	LEX_EQ
-	LEX_LTE
-	LEX_GTE
-	LEX_DONE
-)
+var names []string = regex.SubexpNames()
 
 type Lexer struct {
 	file   *os.File
@@ -30,207 +47,140 @@ type Lexer struct {
 	row    int
 	col    int
 	txt    string
-	tok    rune
-	buf    []rune
-	state  LexerState
+	name   string
+	line   string
 }
 
 func NewLexer(f *os.File) *Lexer {
 	l := new(Lexer)
 	l.file = f
 	l.reader = bufio.NewReader(l.file)
-	l.row = 1
+	l.row = 0
 	l.col = 0
 	l.txt = ""
-	l.tok = 0
-	l.buf = make([]rune, 0)
-	l.state = LEX_START
+	l.name = ""
+	l.line = ""
 	return l
 }
 
 func (l *Lexer) String() string {
-	return fmt.Sprintf("Lexer: %s, [%d:%d] (%s)", l.Name(), l.Row(), l.Col(), l.Text())
+	return fmt.Sprintf("%s[%d:%d] %s %s", l.FileName(), l.Row(), l.Col(), l.Text(), l.Name())
+}
+
+func (l *Lexer) GetToken(value string) int {
+	switch value {
+	case "IF":
+		return IF
+	case "ELSE":
+		return ELSE
+	case "INT":
+		return INT
+	case "VOID":
+		return VOID
+	case "WHILE":
+		return WHILE
+	case "NEQ":
+		return NEQ
+	case "EQ":
+		return EQ
+	case "LTE":
+		return LTE
+	case "GTE":
+		return GTE
+	case "ASSIGN":
+		return ASSIGN
+	case "LT":
+		return LT
+	case "GT":
+		return GT
+	case "PLUS":
+		return PLUS
+	case "MINUS":
+		return MINUS
+	case "TIMES":
+		return TIMES
+	case "OVER":
+		return OVER
+	case "LPAREN":
+		return LPAREN
+	case "RPAREN":
+		return RPAREN
+	case "LBRACKET":
+		return LBRACKET
+	case "RBRACKET":
+		return RBRACKET
+	case "LBRACE":
+		return LBRACE
+	case "RBRACE":
+		return RBRACE
+	case "COMMA":
+		return COMMA
+	case "SEMI":
+		return SEMI
+	case "NUM":
+		return NUM
+	case "ID":
+		return ID
+	default:
+		fmt.Printf("Error unknown token")
+		return 0
+	}
+	return 0
 }
 
 func (l *Lexer) Lex(lval *yySymType) int {
-	var value int = 0
-	l.state = LEX_START
-	for l.state != LEX_DONE {
-		var keep bool = true
+
+	in_comment := false
+	keepReading := true
+	for keepReading == true {
 		var err error
-		l.tok, err = l.Read()
+		l.line, err = l.reader.ReadString('\n')
+		l.row++
 		if err == nil {
-
-			if l.tok == '\n' {
-				l.row++
-				l.col = 0
-			}
-			l.col++
-
-			switch l.state {
-			case LEX_START:
-				l.buf = make([]rune, 0)
-				if unicode.IsDigit(l.tok) {
-					l.state = LEX_NUM
-				} else if unicode.IsLetter(l.tok) {
-					l.state = LEX_ID
-				} else if l.tok == '!' {
-					l.state = LEX_NEQ
-				} else if l.tok == '=' {
-					l.state = LEX_EQ
-				} else if l.tok == '<' {
-					l.state = LEX_LTE
-				} else if l.tok == '>' {
-					l.state = LEX_GTE
-				} else if l.tok == '/' {
-					l.state = LEX_COMMENT_FIRST
-				} else if unicode.IsSpace(l.tok) {
-					keep = false
-				} else {
-					l.state = LEX_DONE
-					switch l.tok {
-					case '+':
-						value = PLUS
-					case '-':
-						value = MINUS
-					case '*':
-						value = TIMES
-					case ';':
-						value = SEMI
-					case '(':
-						value = LPAREN
-					case ')':
-						value = RPAREN
-					case '[':
-						value = LBRACKET
-					case ']':
-						value = RBRACKET
-					case '{':
-						value = LBRACE
-					case '}':
-						value = RBRACE
-					case ',':
-						value = COMMA
-					default:
-						keep = false
-						fmt.Printf("Error: unknown token [%+v]\n", l)
+			keepLining := true
+			for keepLining == true {
+				matches := regex.FindStringSubmatchIndex(l.line)
+				if matches != nil {
+					for i := 2; i < len(matches); i = i + 2 {
+						if matches[i] != -1 {
+							if names[i/2] == "BEG_COMMENT" {
+								in_comment = true
+							}
+							if in_comment == false {
+								l.col = matches[i] + 1
+								l.txt = l.line[matches[i]:matches[i+1]]
+								l.line = l.line[matches[i+1]:len(l.line)]
+								l.name = names[i/2]
+								fmt.Printf("token: %+v\n", l)
+							} else {
+								l.line = l.line[matches[i+1]:len(l.line)]
+							}
+							if names[i/2] == "END_COMMENT" {
+								in_comment = false
+							}
+							break
+						}
 					}
-				}
-			case LEX_NUM:
-				if unicode.IsDigit(l.tok) == false {
-					l.Unread()
-					l.state = LEX_DONE
-					value = NUM
-					keep = false
-				}
-			case LEX_ID:
-				if unicode.IsLetter(l.tok) == false {
-					l.Unread()
-					l.state = LEX_DONE
-					keep = false
-					switch string(l.buf) {
-					case "if":
-						value = IF
-					case "else":
-						value = ELSE
-					case "int":
-						value = INT
-					case "void":
-						value = VOID
-					case "while":
-						value = WHILE
-					default:
-						value = ID
-					}
-				}
-			case LEX_NEQ:
-				l.state = LEX_DONE
-				if l.tok == '=' {
-					value = NEQ
 				} else {
-					keep = false
-					fmt.Printf("Error: unknown token !%c\n", l.tok)
+					keepLining = false
 				}
-			case LEX_EQ:
-				l.state = LEX_DONE
-				if l.tok == '=' {
-					value = EQ
-				} else {
-					value = ASSIGN
-				}
-			case LEX_LTE:
-				l.state = LEX_DONE
-				if l.tok == '=' {
-					value = LTE
-				} else {
-					value = LT
-				}
-			case LEX_GTE:
-				l.state = LEX_DONE
-				if l.tok == '=' {
-					value = GTE
-				} else {
-					value = GT
-				}
-			case LEX_COMMENT_FIRST:
-				if l.tok == '*' {
-					l.state = LEX_COMMENT_STAR
-				} else {
-					l.state = LEX_DONE
-					value = OVER
-				}
-			case LEX_COMMENT:
-				if l.tok == '*' {
-					l.state = LEX_COMMENT_STAR
-				}
-			case LEX_COMMENT_STAR:
-				if l.tok == '/' {
-					l.state = LEX_START
-				} else if l.tok == '*' {
-					l.state = LEX_COMMENT_STAR
-				} else {
-					l.state = LEX_COMMENT
-				}
-			case LEX_DONE:
-			default:
-				l.state = LEX_DONE
-				keep = false
-				fmt.Printf("Error: internal error, unknown state\n")
 			}
 		} else {
-			l.state = LEX_DONE
-			keep = false
 			if err != io.EOF {
-				fmt.Printf("Error: file read %s\n", err)
+				fmt.Printf("error reading from file")
 			}
-		}
-
-		if keep == true {
-			l.buf = append(l.buf, l.tok)
-		}
-
-		if l.state == LEX_DONE {
-			lval.yys = value
-			lval.str = string(l.buf)
+			keepReading = false
 		}
 	}
-	return value
+
+	return l.GetToken(l.name)
 }
 
 func (l *Lexer) Error(e string) {
 	fmt.Printf("Error: %s [%+v]\n", e, l)
 }
 
-func (l *Lexer) Read() (rune, error) {
-	r, _, err := l.reader.ReadRune()
-	return r, err
-}
-
-func (l *Lexer) Unread() error {
-	return l.reader.UnreadRune()
-}
-
-func (l *Lexer) Name() string {
+func (l *Lexer) FileName() string {
 	return l.file.Name()
 }
 
@@ -243,5 +193,9 @@ func (l *Lexer) Col() int {
 }
 
 func (l *Lexer) Text() string {
-	return string(l.buf)
+	return l.txt
+}
+
+func (l *Lexer) Name() string {
+	return l.name
 }
