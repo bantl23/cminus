@@ -8,39 +8,6 @@ import (
 	"regexp"
 )
 
-var regex *regexp.Regexp = regexp.MustCompile("(?P<BEG_COMMENT>\\/\\*)|" +
-	"(?P<END_COMMENT>\\*\\/)|" +
-	"(?P<IF>if)|" +
-	"(?P<ELSE>else)`|" +
-	"(?P<INT>int)|" +
-	"(?P<VOID>void)|" +
-	"(?P<WHILE>while)|" +
-	"(?P<NEQ>!=)|" +
-	"(?P<EQ>==)|" +
-	"(?P<LTE><=)|" +
-	"(?P<GTE>>=)|" +
-	"(?P<ASSIGN>=)|" +
-	"(?P<LT><)|" +
-	"(?P<GT>>)|" +
-	"(?P<PLUS>\\+)|" +
-	"(?P<MINUS>-)|" +
-	"(?P<TIMES>\\*)|" +
-	"(?P<OVER>\\/)|" +
-	"(?P<LPAREN>\\()|" +
-	"(?P<RPAREN>\\))|" +
-	"(?P<LBRACKET>\\[)|" +
-	"(?P<RBRACKET>\\])|" +
-	"(?P<LBRACE>\\{)|" +
-	"(?P<RBRACE>\\})|" +
-	"(?P<COMMA>,)|" +
-	"(?P<SEMI>;)|" +
-	"(?P<NUM>[0-9]+)|" +
-	"(?P<ID>[a-zA-Z]+)|" +
-	"(?P<WHITESPACE>[ \\t]+)" +
-	"(?P<NEWLINE>\\n)")
-
-var names []string = regex.SubexpNames()
-
 type Lexer struct {
 	file   *os.File
 	reader *bufio.Reader
@@ -49,6 +16,8 @@ type Lexer struct {
 	txt    string
 	name   string
 	line   string
+	regex  *regexp.Regexp
+	names  []string
 }
 
 func NewLexer(f *os.File) *Lexer {
@@ -60,6 +29,37 @@ func NewLexer(f *os.File) *Lexer {
 	l.txt = ""
 	l.name = ""
 	l.line = ""
+	l.regex = regexp.MustCompile("(?P<BEG_COMMENT>\\/\\*)|" +
+		"(?P<END_COMMENT>\\*\\/)|" +
+		"(?P<IF>if)|" +
+		"(?P<ELSE>else)`|" +
+		"(?P<INT>int)|" +
+		"(?P<VOID>void)|" +
+		"(?P<WHILE>while)|" +
+		"(?P<NEQ>!=)|" +
+		"(?P<EQ>==)|" +
+		"(?P<LTE><=)|" +
+		"(?P<GTE>>=)|" +
+		"(?P<ASSIGN>=)|" +
+		"(?P<LT><)|" +
+		"(?P<GT>>)|" +
+		"(?P<PLUS>\\+)|" +
+		"(?P<MINUS>-)|" +
+		"(?P<TIMES>\\*)|" +
+		"(?P<OVER>\\/)|" +
+		"(?P<LPAREN>\\()|" +
+		"(?P<RPAREN>\\))|" +
+		"(?P<LBRACKET>\\[)|" +
+		"(?P<RBRACKET>\\])|" +
+		"(?P<LBRACE>\\{)|" +
+		"(?P<RBRACE>\\})|" +
+		"(?P<COMMA>,)|" +
+		"(?P<SEMI>;)|" +
+		"(?P<NUM>[0-9]+)|" +
+		"(?P<ID>[a-zA-Z]+)|" +
+		"(?P<WHITESPACE>[ \\t]+)" +
+		"(?P<NEWLINE>\\n)")
+	l.names = l.regex.SubexpNames()
 	return l
 }
 
@@ -121,11 +121,15 @@ func (l *Lexer) GetToken(value string) int {
 		return NUM
 	case "ID":
 		return ID
+	case "EOF":
+		fmt.Printf("EOF")
+		return yyEofCode
 	default:
 		fmt.Printf("Error unknown token")
-		return 0
+		return yyErrCode
 	}
-	return 0
+	fmt.Printf("Error unknown")
+	return yyErrCode
 }
 
 func (l *Lexer) Lex(lval *yySymType) int {
@@ -139,23 +143,23 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		if err == nil {
 			keepLining := true
 			for keepLining == true {
-				matches := regex.FindStringSubmatchIndex(l.line)
+				matches := l.regex.FindStringSubmatchIndex(l.line)
 				if matches != nil {
 					for i := 2; i < len(matches); i = i + 2 {
 						if matches[i] != -1 {
-							if names[i/2] == "BEG_COMMENT" {
+							if l.names[i/2] == "BEG_COMMENT" {
 								in_comment = true
 							}
 							if in_comment == false {
 								l.col = matches[i] + 1
 								l.txt = l.line[matches[i]:matches[i+1]]
 								l.line = l.line[matches[i+1]:len(l.line)]
-								l.name = names[i/2]
+								l.name = l.names[i/2]
 								fmt.Printf("token: %+v\n", l)
 							} else {
 								l.line = l.line[matches[i+1]:len(l.line)]
 							}
-							if names[i/2] == "END_COMMENT" {
+							if l.names[i/2] == "END_COMMENT" {
 								in_comment = false
 							}
 							break
@@ -166,7 +170,10 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				}
 			}
 		} else {
-			if err != io.EOF {
+			if err == io.EOF {
+				l.name = "EOF"
+				l.txt = "EOF"
+			} else {
 				fmt.Printf("error reading from file")
 			}
 			keepReading = false
