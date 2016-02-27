@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/bantl23/cminus/log"
 	"io"
 	"os"
 	"regexp"
@@ -67,105 +68,74 @@ func NewLexer(f *os.File) *Lexer {
 }
 
 func (l *Lexer) String() string {
-	return fmt.Sprintf("%s[%d:%d] %s %s", l.FileName(), l.Row(), l.Col(), l.Text(), l.Name())
+	return fmt.Sprintf("%s:%d:%d] %s %s", l.FileName(), l.Row(), l.Col(), l.Text(), l.Name())
 }
 
 func (l *Lexer) GetToken(value string, lval *yySymType) int {
 	lval.yys = yyErrCode
 	lval.str = l.Text()
-	fmt.Printf("%s\n", lval.str)
 	switch value {
 	case "IF":
 		lval.yys = IF
-		return IF
 	case "ELSE":
 		lval.yys = ELSE
-		return ELSE
 	case "INT":
 		lval.yys = INT
-		return INT
 	case "VOID":
 		lval.yys = VOID
-		return VOID
 	case "WHILE":
 		lval.yys = WHILE
-		return WHILE
 	case "NEQ":
 		lval.yys = NEQ
-		return NEQ
 	case "EQ":
 		lval.yys = EQ
-		return EQ
 	case "LTE":
 		lval.yys = LTE
-		return LTE
 	case "GTE":
 		lval.yys = GTE
-		return GTE
 	case "ASSIGN":
 		lval.yys = ASSIGN
-		return ASSIGN
 	case "LT":
 		lval.yys = LT
-		return LT
 	case "GT":
 		lval.yys = GT
-		return GT
 	case "PLUS":
 		lval.yys = PLUS
-		return PLUS
 	case "MINUS":
 		lval.yys = MINUS
-		return MINUS
 	case "TIMES":
 		lval.yys = TIMES
-		return TIMES
 	case "OVER":
 		lval.yys = OVER
-		return OVER
 	case "LPAREN":
 		lval.yys = LPAREN
-		return LPAREN
 	case "RPAREN":
 		lval.yys = RPAREN
-		return RPAREN
 	case "LBRACKET":
 		lval.yys = LBRACKET
-		return LBRACKET
 	case "RBRACKET":
 		lval.yys = RBRACKET
-		return RBRACKET
 	case "LBRACE":
 		lval.yys = LBRACE
-		return LBRACE
 	case "RBRACE":
 		lval.yys = RBRACE
-		return RBRACE
 	case "COMMA":
 		lval.yys = COMMA
-		return COMMA
 	case "SEMI":
 		lval.yys = SEMI
-		return SEMI
 	case "NUM":
 		lval.yys = NUM
 		lval.str = l.Text()
-		return NUM
 	case "ID":
 		lval.yys = ID
 		lval.str = l.Text()
-		return ID
 	case "EOF":
 		lval.yys = 0
-		return 0
 	default:
 		lval.yys = yyErrCode
-		fmt.Printf("Error unknown token")
-		return 0
+		log.Error.Printf("Unknown token\n")
 	}
-	lval.yys = yyErrCode
-	fmt.Printf("Error unknown")
-	return 0
+	return lval.yys
 }
 
 func (l *Lexer) Lex(lval *yySymType) int {
@@ -176,7 +146,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		if l.readLine == true {
 			l.curLine, err = l.reader.ReadString('\n')
 			if err == nil {
-				fmt.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
+				log.Echo.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
 				l.curLine = strings.TrimSpace(l.curLine)
 				l.row++
 				l.readLine = false
@@ -217,7 +187,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			if err == io.EOF {
 				l.tokName = "EOF"
 			} else {
-				fmt.Printf("error reading from file")
+				log.Error.Printf("File read %s\n", err)
 			}
 			keepProcessing = false
 		}
@@ -226,7 +196,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 }
 
 func (l *Lexer) Error(e string) {
-	fmt.Printf("Error: %s [%+v]\n", e, l)
+	log.Error.Printf("%s [%+v]\n", e, l)
 }
 
 func (l *Lexer) FileName() string {

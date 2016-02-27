@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/bantl23/cminus/log"
 	"github.com/codegangsta/cli"
 	"os"
 	"strings"
@@ -34,20 +34,23 @@ func main() {
 			Usage:       "Enable or disable code generation",
 			Destination: &code,
 		},
-		cli.BoolTFlag{
+		cli.BoolFlag{
 			Name:        "trace",
 			Usage:       "Turn on code tracing",
 			Destination: &trace,
 		},
-		cli.BoolTFlag{
+		cli.BoolFlag{
 			Name:        "echo",
 			Usage:       "Print source code",
 			Destination: &echo,
 		},
 	}
 	app.Action = func(c *cli.Context) {
+
+		log.InitLogger(trace, echo)
+
 		if len(c.Args()) == 0 {
-			fmt.Println("Error: must supply filename to compile")
+			log.Error.Println("Must supply filename(s)")
 			os.Exit(1)
 		}
 		if analyze == false {
@@ -58,7 +61,7 @@ func main() {
 			code = false
 		}
 
-		fmt.Printf("options: [parse=%t, analyze=%t, code=%t, echo=%t, trace=%t]\n",
+		log.Trace.Printf("[parse=%t, analyze=%t, code=%t, echo=%t, trace=%t]\n",
 			parse, analyze, code, echo, trace)
 
 		for _, ifilename := range c.Args() {
@@ -67,29 +70,24 @@ func main() {
 			}
 			ofilename := strings.TrimSuffix(ifilename, ".cm") + ".tm"
 
-			fmt.Println("compiling", ifilename)
+			log.Trace.Printf("compiling %s\n", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
 				yyParse(NewLexer(ifile))
 
-				fmt.Println("\nScanning")
-				fmt.Println("========")
-
+				log.Trace.Printf("scanning\n")
 				if parse == true {
-					fmt.Println("\nParsing")
-					fmt.Println("=======")
+					log.Trace.Printf("parsing\n")
 					if analyze == true {
-						fmt.Println("\nAnalyzing")
-						fmt.Println("=========")
+						log.Trace.Printf("analyzing\n")
 						if code == true {
-							fmt.Println("\nCode Generation")
-							fmt.Println("===============")
-							fmt.Println(ofilename)
+							log.Trace.Printf("code generation\n")
+							log.Trace.Printf("creating %s\n", ofilename)
 						}
 					}
 				}
 			} else {
-				fmt.Println("Error opening file", err)
+				log.Error.Printf("File open %s\n", err)
 			}
 		}
 	}

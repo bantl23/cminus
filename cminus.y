@@ -122,27 +122,27 @@ statement_list      : statement_list statement      {
                     ;
 
 statement           : expression_stmt               {
-                                                      fmt.Printf("statement0: %+v %+v", $1, yylex)
+                                                      fmt.Printf("statement0: %+v %+v\n", $1, yylex)
 																										}
                     | compound_stmt                 {
-                                                      fmt.Printf("statement1: %+v %+v", $1, yylex)
+                                                      fmt.Printf("statement1: %+v %+v\n", $1, yylex)
 																										}
                     | selection_stmt                {
-                                                      fmt.Printf("statement2: %+v %+v", $1, yylex)
+                                                      fmt.Printf("statement2: %+v %+v\n", $1, yylex)
 																										}
                     | iteration_stmt                {
-                                                      fmt.Printf("statement3: %+v %+v", $1, yylex)
+                                                      fmt.Printf("statement3: %+v %+v\n", $1, yylex)
 																										}
                     | return_stmt                   {
-                                                      fmt.Printf("statement4: %+v %+v", $1, yylex)
+                                                      fmt.Printf("statement4: %+v %+v\n", $1, yylex)
 																										}
                     ;
 
 expression_stmt     : expression SEMI               {
-                                                      fmt.Printf("expression_stmt0: %+v %+v %+v", $1, $2, yylex)
+                                                      fmt.Printf("expression_stmt0: %+v %+v %+v\n", $1, $2, yylex)
 																										}
                     | SEMI                          {
-                                                      fmt.Printf("expression_stmt1: %+v %+v", $1, yylex)
+                                                      fmt.Printf("expression_stmt1: %+v %+v\n", $1, yylex)
 																										}
                     ;
 
