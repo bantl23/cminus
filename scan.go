@@ -40,6 +40,7 @@ func NewLexer(f *os.File) *Lexer {
 		"(?P<INT>int)|" +
 		"(?P<VOID>void)|" +
 		"(?P<WHILE>while)|" +
+		"(?P<RETURN>return)|" +
 		"(?P<NEQ>!=)|" +
 		"(?P<EQ>==)|" +
 		"(?P<LTE><=)|" +
@@ -85,6 +86,8 @@ func (l *Lexer) GetToken(value string, lval *yySymType) int {
 		lval.yys = VOID
 	case "WHILE":
 		lval.yys = WHILE
+	case "RETURN":
+		lval.yys = RETURN
 	case "NEQ":
 		lval.yys = NEQ
 	case "EQ":
@@ -169,6 +172,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 								l.tokName = l.tokNames[i/2]
 								keepScanning = false
 								keepProcessing = false
+								log.Trace.Printf("tok: %+v", l)
 							} else {
 								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
 							}
