@@ -177,8 +177,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 								l.tokName = l.tokNames[i/2]
 								keepScanning = false
 								keepProcessing = false
-								log.Trace.Printf("lin: %d %d", matches[i], matches[i+1])
-								log.Trace.Printf("tok: %+v", l)
 							} else {
 								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
 							}
