@@ -11,16 +11,17 @@ import (
 )
 
 type Lexer struct {
-	file     *os.File
-	reader   *bufio.Reader
-	row      int
-	column   int
-	text     string
-	tokName  string
-	curLine  string
-	readLine bool
-	regex    *regexp.Regexp
-	tokNames []string
+	file       *os.File
+	reader     *bufio.Reader
+	row        int
+	column     int
+	text       string
+	tokName    string
+	curLine    string
+	prevColumn int
+	readLine   bool
+	regex      *regexp.Regexp
+	tokNames   []string
 }
 
 func NewLexer(f *os.File) *Lexer {
@@ -32,11 +33,12 @@ func NewLexer(f *os.File) *Lexer {
 	l.text = ""
 	l.tokName = ""
 	l.curLine = ""
+	l.prevColumn = 0
 	l.readLine = true
 	l.regex = regexp.MustCompile("(?P<BEG_COMMENT>\\/\\*)|" +
 		"(?P<END_COMMENT>\\*\\/)|" +
 		"(?P<IF>if)|" +
-		"(?P<ELSE>else)`|" +
+		"(?P<ELSE>else)|" +
 		"(?P<INT>int)|" +
 		"(?P<VOID>void)|" +
 		"(?P<WHILE>while)|" +
@@ -152,6 +154,8 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				log.Echo.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
 				l.curLine = strings.TrimSpace(l.curLine)
 				l.row++
+				l.column = 1
+				l.prevColumn = 0
 				l.readLine = false
 			}
 		}
@@ -166,12 +170,14 @@ func (l *Lexer) Lex(lval *yySymType) int {
 								in_comment = true
 							}
 							if in_comment == false {
-								l.column = matches[i] + 1
+								l.column = l.column + matches[i] + l.prevColumn
+								l.prevColumn = matches[i+1] - matches[i]
 								l.text = l.curLine[matches[i]:matches[i+1]]
 								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
 								l.tokName = l.tokNames[i/2]
 								keepScanning = false
 								keepProcessing = false
+								log.Trace.Printf("lin: %d %d", matches[i], matches[i+1])
 								log.Trace.Printf("tok: %+v", l)
 							} else {
 								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
