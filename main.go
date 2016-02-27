@@ -70,19 +70,19 @@ func main() {
 			}
 			ofilename := strings.TrimSuffix(ifilename, ".cm") + ".tm"
 
-			log.Trace.Printf("compiling %s\n", ifilename)
+			log.Info.Printf("compiling %s\n", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
 				yyParse(NewLexer(ifile))
 
-				log.Trace.Printf("scanning\n")
+				log.Info.Printf("scanning\n")
 				if parse == true {
-					log.Trace.Printf("parsing\n")
+					log.Info.Printf("parsing\n")
 					if analyze == true {
-						log.Trace.Printf("analyzing\n")
+						log.Info.Printf("analyzing\n")
 						if code == true {
-							log.Trace.Printf("code generation\n")
-							log.Trace.Printf("creating %s\n", ofilename)
+							log.Info.Printf("code generation\n")
+							log.Info.Printf("creating %s\n", ofilename)
 						}
 					}
 				}
