@@ -6,18 +6,20 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type Lexer struct {
-	file   *os.File
-	reader *bufio.Reader
-	row    int
-	col    int
-	txt    string
-	name   string
-	line   string
-	regex  *regexp.Regexp
-	names  []string
+	file     *os.File
+	reader   *bufio.Reader
+	row      int
+	column   int
+	text     string
+	tokName  string
+	curLine  string
+	readLine bool
+	regex    *regexp.Regexp
+	tokNames []string
 }
 
 func NewLexer(f *os.File) *Lexer {
@@ -25,10 +27,11 @@ func NewLexer(f *os.File) *Lexer {
 	l.file = f
 	l.reader = bufio.NewReader(l.file)
 	l.row = 0
-	l.col = 0
-	l.txt = ""
-	l.name = ""
-	l.line = ""
+	l.column = 0
+	l.text = ""
+	l.tokName = ""
+	l.curLine = ""
+	l.readLine = true
 	l.regex = regexp.MustCompile("(?P<BEG_COMMENT>\\/\\*)|" +
 		"(?P<END_COMMENT>\\*\\/)|" +
 		"(?P<IF>if)|" +
@@ -59,7 +62,7 @@ func NewLexer(f *os.File) *Lexer {
 		"(?P<ID>[a-zA-Z]+)|" +
 		"(?P<WHITESPACE>[ \\t]+)" +
 		"(?P<NEWLINE>\\n)")
-	l.names = l.regex.SubexpNames()
+	l.tokNames = l.regex.SubexpNames()
 	return l
 }
 
@@ -67,120 +70,159 @@ func (l *Lexer) String() string {
 	return fmt.Sprintf("%s[%d:%d] %s %s", l.FileName(), l.Row(), l.Col(), l.Text(), l.Name())
 }
 
-func (l *Lexer) GetToken(value string) int {
+func (l *Lexer) GetToken(value string, lval *yySymType) int {
+	lval.yys = yyErrCode
+	lval.str = l.Text()
+	fmt.Printf("%s\n", lval.str)
 	switch value {
 	case "IF":
+		lval.yys = IF
 		return IF
 	case "ELSE":
+		lval.yys = ELSE
 		return ELSE
 	case "INT":
+		lval.yys = INT
 		return INT
 	case "VOID":
+		lval.yys = VOID
 		return VOID
 	case "WHILE":
+		lval.yys = WHILE
 		return WHILE
 	case "NEQ":
+		lval.yys = NEQ
 		return NEQ
 	case "EQ":
+		lval.yys = EQ
 		return EQ
 	case "LTE":
+		lval.yys = LTE
 		return LTE
 	case "GTE":
+		lval.yys = GTE
 		return GTE
 	case "ASSIGN":
+		lval.yys = ASSIGN
 		return ASSIGN
 	case "LT":
+		lval.yys = LT
 		return LT
 	case "GT":
+		lval.yys = GT
 		return GT
 	case "PLUS":
+		lval.yys = PLUS
 		return PLUS
 	case "MINUS":
+		lval.yys = MINUS
 		return MINUS
 	case "TIMES":
+		lval.yys = TIMES
 		return TIMES
 	case "OVER":
+		lval.yys = OVER
 		return OVER
 	case "LPAREN":
+		lval.yys = LPAREN
 		return LPAREN
 	case "RPAREN":
+		lval.yys = RPAREN
 		return RPAREN
 	case "LBRACKET":
+		lval.yys = LBRACKET
 		return LBRACKET
 	case "RBRACKET":
+		lval.yys = RBRACKET
 		return RBRACKET
 	case "LBRACE":
+		lval.yys = LBRACE
 		return LBRACE
 	case "RBRACE":
+		lval.yys = RBRACE
 		return RBRACE
 	case "COMMA":
+		lval.yys = COMMA
 		return COMMA
 	case "SEMI":
+		lval.yys = SEMI
 		return SEMI
 	case "NUM":
+		lval.yys = NUM
+		lval.str = l.Text()
 		return NUM
 	case "ID":
+		lval.yys = ID
+		lval.str = l.Text()
 		return ID
 	case "EOF":
-		fmt.Printf("EOF")
-		return yyEofCode
+		lval.yys = 0
+		return 0
 	default:
+		lval.yys = yyErrCode
 		fmt.Printf("Error unknown token")
-		return yyErrCode
+		return 0
 	}
+	lval.yys = yyErrCode
 	fmt.Printf("Error unknown")
-	return yyErrCode
+	return 0
 }
 
 func (l *Lexer) Lex(lval *yySymType) int {
-
 	in_comment := false
-	keepReading := true
-	for keepReading == true {
-		var err error
-		l.line, err = l.reader.ReadString('\n')
-		l.row++
+	keepProcessing := true
+	for keepProcessing == true {
+		var err error = nil
+		if l.readLine == true {
+			l.curLine, err = l.reader.ReadString('\n')
+			if err == nil {
+				fmt.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
+				l.curLine = strings.TrimSpace(l.curLine)
+				l.row++
+				l.readLine = false
+			}
+		}
 		if err == nil {
-			keepLining := true
-			for keepLining == true {
-				matches := l.regex.FindStringSubmatchIndex(l.line)
+			keepScanning := true
+			for keepScanning == true {
+				matches := l.regex.FindStringSubmatchIndex(l.curLine)
 				if matches != nil {
 					for i := 2; i < len(matches); i = i + 2 {
 						if matches[i] != -1 {
-							if l.names[i/2] == "BEG_COMMENT" {
+							if l.tokNames[i/2] == "BEG_COMMENT" {
 								in_comment = true
 							}
 							if in_comment == false {
-								l.col = matches[i] + 1
-								l.txt = l.line[matches[i]:matches[i+1]]
-								l.line = l.line[matches[i+1]:len(l.line)]
-								l.name = l.names[i/2]
-								fmt.Printf("token: %+v\n", l)
+								l.column = matches[i] + 1
+								l.text = l.curLine[matches[i]:matches[i+1]]
+								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
+								l.tokName = l.tokNames[i/2]
+								keepScanning = false
+								keepProcessing = false
 							} else {
-								l.line = l.line[matches[i+1]:len(l.line)]
+								l.curLine = l.curLine[matches[i+1]:len(l.curLine)]
 							}
-							if l.names[i/2] == "END_COMMENT" {
+							if l.tokNames[i/2] == "END_COMMENT" {
 								in_comment = false
 							}
 							break
 						}
 					}
 				} else {
-					keepLining = false
+					keepScanning = false
+					l.readLine = true
 				}
 			}
 		} else {
 			if err == io.EOF {
-				l.name = "EOF"
-				l.txt = "EOF"
+				l.tokName = "EOF"
 			} else {
 				fmt.Printf("error reading from file")
 			}
-			keepReading = false
+			keepProcessing = false
 		}
 	}
-
-	return l.GetToken(l.name)
+	return l.GetToken(l.tokName, lval)
 }
 
 func (l *Lexer) Error(e string) {
@@ -196,13 +238,13 @@ func (l *Lexer) Row() int {
 }
 
 func (l *Lexer) Col() int {
-	return l.col
+	return l.column
 }
 
 func (l *Lexer) Text() string {
-	return l.txt
+	return l.text
 }
 
 func (l *Lexer) Name() string {
-	return l.name
+	return l.tokName
 }
