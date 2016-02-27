@@ -151,12 +151,12 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		if l.readLine == true {
 			l.curLine, err = l.reader.ReadString('\n')
 			if err == nil {
-				log.Echo.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
 				l.curLine = strings.TrimSpace(l.curLine)
 				l.row++
 				l.column = 1
 				l.prevColumn = 0
 				l.readLine = false
+				log.Echo.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
 			}
 		}
 		if err == nil {
