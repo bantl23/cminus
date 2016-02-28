@@ -12,7 +12,10 @@ func main() {
 	analyze := true
 	code := true
 	echo := false
-	trace := false
+	trace_scan := false
+	trace_parse := false
+	trace_analyze := false
+	trace_codegen := false
 
 	app := cli.NewApp()
 	app.Name = "cminus"
@@ -35,9 +38,24 @@ func main() {
 			Destination: &code,
 		},
 		cli.BoolFlag{
-			Name:        "trace",
-			Usage:       "Turn on code tracing",
-			Destination: &trace,
+			Name:        "trace-scan",
+			Usage:       "Turn on tracing for scanning phase",
+			Destination: &trace_scan,
+		},
+		cli.BoolFlag{
+			Name:        "trace-parse",
+			Usage:       "Turn on tracing for parsing phase",
+			Destination: &trace_parse,
+		},
+		cli.BoolFlag{
+			Name:        "trace-analyze",
+			Usage:       "Turn on tracing for analysis phase",
+			Destination: &trace_analyze,
+		},
+		cli.BoolFlag{
+			Name:        "trace-codegen",
+			Usage:       "Turn on tracing for code generation phase",
+			Destination: &trace_codegen,
 		},
 		cli.BoolFlag{
 			Name:        "echo",
@@ -47,10 +65,16 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) {
 
-		log.InitLogger(trace, echo)
+		log.InfoLog = log.InitLog(true)
+		log.ErrorLog = log.InitLog(true)
+		log.EchoLog = log.InitLog(echo)
+		log.ScanLog = log.InitLog(trace_scan)
+		log.ParseLog = log.InitLog(trace_parse)
+		log.AnalyzeLog = log.InitLog(trace_analyze)
+		log.CodeLog = log.InitLog(trace_codegen)
 
 		if len(c.Args()) == 0 {
-			log.Error.Println("Must supply filename(s)")
+			log.ErrorLog.Println("Must supply filename(s)")
 			os.Exit(1)
 		}
 		if analyze == false {
@@ -61,33 +85,30 @@ func main() {
 			code = false
 		}
 
-		log.Trace.Printf("[parse=%t, analyze=%t, code=%t, echo=%t, trace=%t]\n",
-			parse, analyze, code, echo, trace)
-
 		for _, ifilename := range c.Args() {
 			if strings.HasSuffix(ifilename, ".cm") == false {
 				ifilename = ifilename + ".cm"
 			}
 			ofilename := strings.TrimSuffix(ifilename, ".cm") + ".tm"
 
-			log.Info.Printf("compiling %s\n", ifilename)
+			log.InfoLog.Printf("compiling %s\n", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
 				yyParse(NewLexer(ifile))
 
-				log.Info.Printf("scanning\n")
+				log.InfoLog.Printf("scanning\n")
 				if parse == true {
-					log.Info.Printf("parsing\n")
+					log.InfoLog.Printf("parsing\n")
 					if analyze == true {
-						log.Info.Printf("analyzing\n")
+						log.InfoLog.Printf("analyzing\n")
 						if code == true {
-							log.Info.Printf("code generation\n")
-							log.Info.Printf("creating %s\n", ofilename)
+							log.InfoLog.Printf("code generation\n")
+							log.InfoLog.Printf("creating %s\n", ofilename)
 						}
 					}
 				}
 			} else {
-				log.Error.Printf("File open %s\n", err)
+				log.ErrorLog.Printf("File open %s\n", err)
 			}
 		}
 	}
