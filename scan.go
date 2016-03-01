@@ -64,7 +64,7 @@ func NewLexer(f *os.File) *Lexer {
 		"(?P<SEMI>;)|" +
 		"(?P<NUM>[0-9]+)|" +
 		"(?P<ID>[a-zA-Z]+)|" +
-		"(?P<WHITESPACE>[ \\t]+)" +
+		"(?P<WHITESPACE>[ \\t\\r]+)" +
 		"(?P<NEWLINE>\\n)")
 	l.tokNames = l.regex.SubexpNames()
 	return l
