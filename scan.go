@@ -223,7 +223,3 @@ func (l *Lexer) Col() int {
 func (l *Lexer) Text() string {
 	return l.text
 }
-
-func (l *Lexer) Name() string {
-	return l.tokName
-}
