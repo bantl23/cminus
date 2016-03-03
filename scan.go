@@ -130,10 +130,8 @@ func (l *Lexer) GetToken(value string, lval *yySymType) int {
 		lval.yys = SEMI
 	case "NUM":
 		lval.yys = NUM
-		lval.str = l.Text()
 	case "ID":
 		lval.yys = ID
-		lval.str = l.Text()
 	case "EOF":
 		lval.yys = 0
 	default:
