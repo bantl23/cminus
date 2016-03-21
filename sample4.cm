@@ -1,0 +1,13 @@
+/*
+  go away
+*/
+void main(void)
+{
+  /*
+    there
+  */
+  int x; /* */
+  /* */ int y;
+
+  z = x * y;
+}

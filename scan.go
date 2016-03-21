@@ -71,7 +71,7 @@ func NewLexer(f *os.File) *Lexer {
 }
 
 func (l *Lexer) String() string {
-	return fmt.Sprintf("%s[%d:%d] %s", l.FileName(), l.Row(), l.Col(), l.Text())
+	return fmt.Sprintf("file=%s,row=%d,col=%d,txt=%s", l.FileName(), l.Row(), l.Col(), l.Text())
 }
 
 func (l *Lexer) GetToken(value string, lval *yySymType) int {

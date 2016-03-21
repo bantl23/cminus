@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
 	"strings"
@@ -12,6 +13,7 @@ func main() {
 	analyze := true
 	code := true
 	echo := false
+	print_parse_tree := false
 	trace_scan := false
 	trace_parse := false
 	trace_analyze := false
@@ -62,6 +64,11 @@ func main() {
 			Usage:       "Print source code",
 			Destination: &echo,
 		},
+		cli.BoolFlag{
+			Name:        "print-parse-tree",
+			Usage:       "Prints parse tree",
+			Destination: &print_parse_tree,
+		},
 	}
 	app.Action = func(c *cli.Context) {
 
@@ -94,11 +101,13 @@ func main() {
 			log.InfoLog.Printf("compiling %s\n", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
-				yyParse(NewLexer(ifile))
-
 				log.InfoLog.Printf("scanning\n")
 				if parse == true {
 					log.InfoLog.Printf("parsing\n")
+					yyParse(NewLexer(ifile))
+					if print_parse_tree == true {
+						syntree.Print(root, 0)
+					}
 					if analyze == true {
 						log.InfoLog.Printf("analyzing\n")
 						if code == true {
