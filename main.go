@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/bantl23/cminus/log"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
@@ -101,17 +102,23 @@ func main() {
 			log.InfoLog.Printf("compiling %s\n", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
-				log.InfoLog.Printf("scanning\n")
 				if parse == true {
-					log.InfoLog.Printf("parsing\n")
+					log.InfoLog.Printf("scanning and parsing\n")
+					log.InfoLog.Printf("====================\n")
 					yyParse(NewLexer(ifile))
 					if print_parse_tree == true {
+						log.InfoLog.Printf("parse tree")
+						log.InfoLog.Printf("==========")
+						fmt.Println(">>>>")
 						syntree.Print(root, 0)
+						fmt.Println("<<<<")
 					}
 					if analyze == true {
 						log.InfoLog.Printf("analyzing\n")
+						log.InfoLog.Printf("=========\n")
 						if code == true {
 							log.InfoLog.Printf("code generation\n")
+							log.InfoLog.Printf("===============\n")
 							log.InfoLog.Printf("creating %s\n", ofilename)
 						}
 					}

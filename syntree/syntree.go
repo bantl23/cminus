@@ -25,21 +25,21 @@ func (nodeKind NodeKind) String() string {
 type StatementKind int
 
 const (
-	UNK_STATEMENT_KIND StatementKind = iota
-	COMPOUND_KIND
+	COMPOUND_KIND StatementKind = iota
 	FUNCTION_KIND
 	ITERATION_KIND
 	RETURN_KIND
 	SELECTION_KIND
+	UNK_STATEMENT_KIND
 )
 
 var statementKinds = [...]string{
-	"UnknownStmtKind",
 	"CompondStmtKind",
 	"FunctionStmtKind",
 	"IterationStmtKind",
 	"ReturnStmtKind",
 	"SelectionStmtKind",
+	"UnknownStmtKind",
 }
 
 func (statementKind StatementKind) String() string {
@@ -49,8 +49,7 @@ func (statementKind StatementKind) String() string {
 type ExpressionKind int
 
 const (
-	UNK_EXPRESSION_KIND ExpressionKind = iota
-	ASSIGN_KIND
+	ASSIGN_KIND ExpressionKind = iota
 	CALL_KIND
 	CONST_KIND
 	ID_KIND
@@ -60,10 +59,10 @@ const (
 	PARAM_ARRAY_KIND
 	VAR_KIND
 	VAR_ARRAY_KIND
+	UNK_EXPRESSION_KIND
 )
 
 var expressionKinds = [...]string{
-	"UnknownExpKind",
 	"AssignExpKind",
 	"CallExpKind",
 	"ConstExpKind",
@@ -74,6 +73,7 @@ var expressionKinds = [...]string{
 	"ParamArrayExpKind",
 	"VarExpKind",
 	"VarArrayExpKind",
+	"UnknownExpKind",
 }
 
 func (expressionKind ExpressionKind) String() string {
@@ -83,15 +83,15 @@ func (expressionKind ExpressionKind) String() string {
 type ExpressionType int
 
 const (
-	UNK_EXPRESSION_TYPE ExpressionType = iota
-	VOID_TYPE
+	VOID_TYPE ExpressionType = iota
 	INTEGER_TYPE
+	UNK_EXPRESSION_TYPE
 )
 
 var expressionTypes = [...]string{
-	"UnknownExpType",
 	"VoidExpType",
 	"IntExpType",
+	"UnknownExpType",
 }
 
 func (expressionType ExpressionType) String() string {
@@ -101,8 +101,7 @@ func (expressionType ExpressionType) String() string {
 type TokenType int
 
 const (
-	UNK_TOKEN_TYPE TokenType = iota
-	ENDFILE
+	ENDFILE TokenType = iota
 	ERROR
 	ELSE
 	IF
@@ -128,10 +127,10 @@ const (
 	RBRACKET
 	LBRACE
 	RBRACE
+	UNK_TOKEN_TYPE
 )
 
 var tokenTypes = [...]string{
-	"UnknownTokenType",
 	"EndOfFile",
 	"Error",
 	"Else",
@@ -158,6 +157,7 @@ var tokenTypes = [...]string{
 	"RightBracket",
 	"LeftBrace",
 	"RightBrace",
+	"UnknownTokenType",
 }
 
 func (tokenType TokenType) String() string {
@@ -165,20 +165,31 @@ func (tokenType TokenType) String() string {
 }
 
 type Node struct {
-	NodeKind   NodeKind
-	StmtKind   StatementKind
-	ExpKind    ExpressionKind
-	ExpType    ExpressionType
-	TokenType  TokenType
-	Name       string
-	Value      int
-	LineNumber int
-	Sibling    *Node
-	Children   []*Node
+	NodeKind  NodeKind
+	StmtKind  StatementKind
+	ExpKind   ExpressionKind
+	ExpType   ExpressionType
+	TokenType TokenType
+	Name      string
+	Value     int
+	Row       int
+	Col       int
+	Sibling   *Node
+	Children  []*Node
 }
 
 func NewNode() *Node {
 	n := new(Node)
+	n.NodeKind = UNK_NODE_KIND
+	n.StmtKind = UNK_STATEMENT_KIND
+	n.ExpKind = UNK_EXPRESSION_KIND
+	n.TokenType = UNK_TOKEN_TYPE
+	n.Name = ""
+	n.Value = -1
+	n.Row = -1
+	n.Col = -1
+	n.Sibling = nil
+	n.Children = nil
 	return n
 }
 
@@ -191,45 +202,45 @@ func Print(node *Node, indent int) {
 		if node.NodeKind == STATEMENT_KIND {
 			switch node.StmtKind {
 			case SELECTION_KIND:
-				fmt.Println("selection")
+				fmt.Printf("selection [%+v%+v]\n", node.Row, node.Col)
 			case ITERATION_KIND:
-				fmt.Println("iteration")
+				fmt.Printf("iteration [%+v:%+v]\n", node.Row, node.Col)
 			case COMPOUND_KIND:
-				fmt.Println("compound")
+				fmt.Printf("compound [%+v:%+v]\n", node.Row, node.Col)
 			case FUNCTION_KIND:
-				fmt.Println("function")
+				fmt.Printf("function %+v %+v [%+v:%+v]\n", node.Name, node.ExpType, node.Row, node.Col)
 			case RETURN_KIND:
-				fmt.Println("return")
+				fmt.Printf("return [%+v:%+v]\n", node.Row, node.Col)
 			default:
-				fmt.Println("unknown statement")
+				fmt.Printf("unknown statement [%+v:%+v]\n", node.Row, node.Col)
 			}
 		} else if node.NodeKind == EXPRESSION_KIND {
 			switch node.ExpKind {
 			case ASSIGN_KIND:
-				fmt.Println("assign", node.Name)
+				fmt.Printf("assign [%+v:%+v]\n", node.Row, node.Col)
 			case CALL_KIND:
-				fmt.Println("call", node.Name)
+				fmt.Printf("call %+v [%+v:%+v]\n", node.Name, node.Row, node.Col)
 			case CONST_KIND:
-				fmt.Println("constant", node.Value)
+				fmt.Printf("constant %+v [%+v:%+v]\n", node.Value, node.Row, node.Col)
 			case ID_KIND:
-				fmt.Println("id", node.Name)
+				fmt.Printf("id %+v [%+v:%+v]\n", node.Name, node.Row, node.Col)
 			case ID_ARRAY_KIND:
-				fmt.Println("id_array", node.Name)
+				fmt.Printf("id_array %+v [%+v:%+v]\n", node.Name, node.Row, node.Col)
 			case OP_KIND:
-				fmt.Println("operator", node.TokenType)
+				fmt.Printf("operator %+v [%+v:%+v]\n", node.TokenType, node.Row, node.Col)
 			case PARAM_KIND:
-				fmt.Println("param", node.Name)
+				fmt.Printf("param %+v %+v [%+v:%+v]\n", node.Name, node.ExpType, node.Row, node.Col)
 			case PARAM_ARRAY_KIND:
-				fmt.Println("param_array", node.Name)
+				fmt.Printf("param_array %+v %+v [%+v:%+v]\n", node.Name, node.ExpType, node.Row, node.Col)
 			case VAR_KIND:
-				fmt.Println("var", node.Name)
+				fmt.Printf("var %+v %+v [%+v:%+v]\n", node.Name, node.ExpType, node.Row, node.Col)
 			case VAR_ARRAY_KIND:
-				fmt.Println("var_array", node.Name)
+				fmt.Printf("var_array %+v %+v %+v [%+v:%+v]\n", node.Name, node.Value, node.ExpType, node.Row, node.Col)
 			default:
-				fmt.Println("unknown expression")
+				fmt.Printf("unknown expression [%+v:%+v]\n", node.Row, node.Col)
 			}
 		} else {
-			fmt.Println("unknown node")
+			fmt.Printf("unknown node [%+v:%+v]\n", node.Row, node.Col)
 		}
 		for _, v := range node.Children {
 			Print(v, indent+2)

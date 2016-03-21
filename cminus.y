@@ -8,12 +8,10 @@ import (
 )
 
 var root *syntree.Node
-var savedName string
 %}
 
 %union {
   node *syntree.Node
-  typ  syntree.TokenType
   str  string
 }
 
@@ -84,6 +82,7 @@ var_declaration     : type_specifier ID SEMI        {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.VAR_ARRAY_KIND
                                                       $$.Name = $2
+                                                      $$.Value, _ = strconv.Atoi($4)
                                                       log.ParseLog.Printf("var_declaration1: %+v\n", $$)
                                                     }
                     ;
@@ -92,12 +91,16 @@ type_specifier      : INT                           {
                                                       log.ParseLog.Printf("type_specifier0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewNode()
                                                       $$.ExpType = syntree.INTEGER_TYPE
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("type_specifier0: %+v\n", $$)
                                                     }
                     | VOID                          {
                                                       log.ParseLog.Printf("type_specifier1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewNode()
                                                       $$.ExpType = syntree.VOID_TYPE
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("type_specifier1: %+v\n", $$)
                                                     }
                     ;
@@ -109,6 +112,8 @@ fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.FUNCTION_KIND
                                                       $$.Name = $2
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $4)
                                                       $$.Children = append($$.Children, $6)
                                                       log.ParseLog.Printf("fun_declaration0: %+v\n", $$)
@@ -122,7 +127,11 @@ params              : param_list                    {
                     | VOID                          {
                                                       log.ParseLog.Printf("params1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewNode()
+                                                      $$.NodeKind = syntree.EXPRESSION_KIND
+                                                      $$.ExpKind = syntree.PARAM_KIND
                                                       $$.ExpType = syntree.VOID_TYPE
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("params1: %+v\n", $$)
 																										}
                     ;
@@ -171,6 +180,8 @@ compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.COMPOUND_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $2)
                                                       $$.Children = append($$.Children, $3)
                                                       log.ParseLog.Printf("compound_stmt0: %+v\n", $$)
@@ -254,6 +265,8 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.SELECTION_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $3)
                                                       $$.Children = append($$.Children, $5)
                                                       log.ParseLog.Printf("selection_stmt0: %+v\n", $$)
@@ -264,6 +277,8 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.SELECTION_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $3)
                                                       $$.Children = append($$.Children, $5)
                                                       $$.Children = append($$.Children, $7)
@@ -277,6 +292,8 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.ITERATION_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $3)
                                                       $$.Children = append($$.Children, $5)
                                                       log.ParseLog.Printf("iteration_stmt0: %+v\n", $$)
@@ -288,6 +305,8 @@ return_stmt         : RETURN SEMI                   {
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.RETURN_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("return_stmt0: %+v\n", $$)
 																										}
                     | RETURN expression SEMI        {
@@ -295,6 +314,8 @@ return_stmt         : RETURN SEMI                   {
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.STATEMENT_KIND
                                                       $$.StmtKind = syntree.RETURN_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $2)
                                                       log.ParseLog.Printf("return_stmt1: %+v\n", $$)
                                                     }
@@ -305,6 +326,8 @@ expression          : var ASSIGN expression         {
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.ASSIGN_KIND
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       $$.Children = append($$.Children, $1)
                                                       $$.Children = append($$.Children, $3)
                                                       log.ParseLog.Printf("expression0: %+v\n", $$)
@@ -321,20 +344,20 @@ var                 : ID                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.ID_KIND
                                                       $$.Name = $1
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("var0: %+v\n", $$)
                                                     }
-                    | ID                            {
-                                                      log.ParseLog.Printf("var1: %+v\n", $1, yylex)
-                                                      savedName = $1
-                                                    }
-                      LBRACKET expression RBRACKET
+                    | ID LBRACKET expression RBRACKET
                                                     {
-                                                      log.ParseLog.Printf("var1: %+v %+v %+v %+v %+v\n", $<node>1, $<node>2, $<node>3, $<node>4, $<node>5, yylex)
+                                                      log.ParseLog.Printf("var1: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, yylex)
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.ID_ARRAY_KIND
-                                                      $$.Name = savedName
-                                                      $$.Children = append($$.Children, $<node>4)
+                                                      $$.Name = $1
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
+                                                      $$.Children = append($$.Children, $3)
                                                       log.ParseLog.Printf("var1: %+v\n", $$)
                                                     }
                     ;
@@ -359,6 +382,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.LT
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop0: %+v\n", $$)
                                                     }
                     | LTE                           {
@@ -367,6 +392,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.LTE
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop1: %+v\n", $$)
                                                     }
                     | GT                            {
@@ -375,6 +402,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.GT
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop2: %+v\n", $$)
                                                     }
                     | GTE                           {
@@ -383,6 +412,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.GTE
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop3: %+v\n", $$)
                                                     }
                     | EQ                            {
@@ -391,6 +422,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.EQ
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop4: %+v\n", $$)
                                                     }
                     | NEQ                           {
@@ -399,6 +432,8 @@ relop               : LT                            {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.NEQ
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("relop5: %+v\n", $$)
                                                     }
 
@@ -422,6 +457,8 @@ addop               : PLUS                          {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.PLUS
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("addop0: %+v\n", $$)
                                                     }
                     | MINUS                         {
@@ -430,6 +467,8 @@ addop               : PLUS                          {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.MINUS
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("addop1: %+v\n", $$)
                                                     }
 
@@ -452,6 +491,8 @@ mulop               : TIMES                         {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.TIMES
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("mulop0: %+v\n", $$)
                                                     }
                     | OVER                          {
@@ -460,6 +501,8 @@ mulop               : TIMES                         {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.OP_KIND
                                                       $$.TokenType = syntree.OVER
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("mulop1: %+v\n", $$)
                                                     }
 
@@ -481,19 +524,22 @@ factor              : LPAREN expression RPAREN      {
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.CONST_KIND
                                                       $$.Value, _ = strconv.Atoi(yylex.(*Lexer).Text())
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
                                                       log.ParseLog.Printf("factor3: %+v %+v\n", $$)
 																										}
                     ;
 
-call                : ID                            { savedName = yylex.(*Lexer).Text() }
-                      LPAREN args RPAREN            {
-																											log.ParseLog.Printf("call0: %+v %+v %+v %+v %+v %+v\n", $<node>1, $<node>2, $<node>3, $<node>4, $<node>5, yylex)
+call                : ID LPAREN args RPAREN         {
+																											log.ParseLog.Printf("call0: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, yylex)
                                                       $$ = syntree.NewNode()
                                                       $$.NodeKind = syntree.EXPRESSION_KIND
                                                       $$.ExpKind = syntree.CALL_KIND
-                                                      $$.Name = savedName
-                                                      $$.Children = append($$.Children, $<node>4)
-                                                      log.ParseLog.Printf("call0: $+v\n", $$)
+                                                      $$.Name = $1
+                                                      $$.Row = yylex.(*Lexer).Row()
+                                                      $$.Col = yylex.(*Lexer).Col()
+                                                      $$.Children = append($$.Children, $3)
+                                                      log.ParseLog.Printf("call0: %+v\n", $$)
 																										}
                     ;
 

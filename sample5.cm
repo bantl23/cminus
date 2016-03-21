@@ -1,0 +1,9 @@
+void xyz(void)
+{
+  return 1;
+}
+void main(void)
+{
+  int z;
+  z = xyz();
+}
