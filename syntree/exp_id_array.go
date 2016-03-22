@@ -29,5 +29,5 @@ func (n *ExpIdArrayNode) SetName(name string) {
 
 func (n ExpIdArrayNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("id_array %+v [%+v:%+v]\n", n.Name(), row, col)
+	return fmt.Sprintf("id_array %+v [%+v:%+v]", n.Name(), row, col)
 }

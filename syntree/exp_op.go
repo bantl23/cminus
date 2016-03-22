@@ -29,5 +29,5 @@ func (n *ExpOpNode) SetTokType(tokType TokenType) {
 
 func (n ExpOpNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("op %+v [%+v:%+v]\n", n.TokType(), row, col)
+	return fmt.Sprintf("op %+v [%+v:%+v]", n.TokType(), row, col)
 }

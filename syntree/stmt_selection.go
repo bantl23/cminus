@@ -19,5 +19,5 @@ func NewStmtSelectionNode() Node {
 
 func (n StmtSelectionNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("selection [%+v:%+v]\n", row, col)
+	return fmt.Sprintf("selection [%+v:%+v]", row, col)
 }

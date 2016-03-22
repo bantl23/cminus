@@ -39,5 +39,5 @@ func (n *ExpParamArrayNode) SetExpType(expType ExpressionType) {
 
 func (n ExpParamArrayNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("param_array %+v %+v [%+v:%+v]\n", n.Name(), n.ExpType(), row, col)
+	return fmt.Sprintf("param_array %+v %+v [%+v:%+v]", n.Name(), n.ExpType(), row, col)
 }

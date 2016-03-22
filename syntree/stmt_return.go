@@ -19,5 +19,5 @@ func NewStmtReturnNode() Node {
 
 func (n StmtReturnNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("return [%+v:%+v]\n", row, col)
+	return fmt.Sprintf("return [%+v:%+v]", row, col)
 }

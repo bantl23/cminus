@@ -29,5 +29,5 @@ func (n *ExpConstNode) SetValue(value int) {
 
 func (n ExpConstNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("constant %+v [%+v:%+v]\n", n.Value(), row, col)
+	return fmt.Sprintf("constant %+v [%+v:%+v]", n.Value(), row, col)
 }

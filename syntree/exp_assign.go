@@ -19,5 +19,5 @@ func NewExpAssignNode() Node {
 
 func (n ExpAssignNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("assign [%+v:%+v]\n", row, col)
+	return fmt.Sprintf("assign [%+v:%+v]", row, col)
 }

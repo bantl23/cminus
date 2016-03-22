@@ -158,7 +158,7 @@ func Print(node Node, indent int) {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
-		fmt.Printf("%+v", node)
+		fmt.Printf("%+v\n", node)
 		for _, v := range node.Children() {
 			Print(v, indent+2)
 		}

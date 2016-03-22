@@ -29,5 +29,5 @@ func (n *ExpIdNode) SetName(name string) {
 
 func (n ExpIdNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("id %+v [%+v:%+v]\n", n.Name(), row, col)
+	return fmt.Sprintf("id %+v [%+v:%+v]", n.Name(), row, col)
 }

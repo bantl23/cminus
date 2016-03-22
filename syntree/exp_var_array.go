@@ -48,5 +48,5 @@ func (n *ExpVarArrayNode) SetExpType(expType ExpressionType) {
 
 func (n ExpVarArrayNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("var_array %+v %+v %+v [%+v:%+v]\n", n.Name(), n.Value(), n.ExpType(), row, col)
+	return fmt.Sprintf("var_array %+v %+v %+v [%+v:%+v]", n.Name(), n.Value(), n.ExpType(), row, col)
 }

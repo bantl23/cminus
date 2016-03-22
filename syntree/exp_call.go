@@ -29,5 +29,5 @@ func (n *ExpCallNode) SetName(name string) {
 
 func (n ExpCallNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("call %+v [%+v:%+v]\n", n.Name(), row, col)
+	return fmt.Sprintf("call %+v [%+v:%+v]", n.Name(), row, col)
 }

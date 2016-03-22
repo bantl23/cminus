@@ -39,5 +39,5 @@ func (n *ExpVarNode) SetExpType(expType ExpressionType) {
 
 func (n ExpVarNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("var %+v %+v [%+v:%+v]\n", n.Name(), n.ExpType(), row, col)
+	return fmt.Sprintf("var %+v %+v [%+v:%+v]", n.Name(), n.ExpType(), row, col)
 }

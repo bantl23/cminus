@@ -37,13 +37,12 @@ var root syntree.Node
 %%
 
 program             : declaration_list              {
-                                                      log.ParseLog.Printf("program0: %+v %+v\n", $1, yylex)
                                                       root = $1
+                                                      log.ParseLog.Printf("program0: %+v\n", root)
                                                     }
                     ;
 
 declaration_list    : declaration_list declaration  {
-                                                      log.ParseLog.Printf("declaration_list0: %+v %+v %+v\n", $1, $2, yylex)
                                                       t := $1
                                                       if t != nil {
                                                         for t.Sibling() != nil {
@@ -54,25 +53,25 @@ declaration_list    : declaration_list declaration  {
                                                       } else {
                                                         $$ = $2
                                                       }
+                                                      log.ParseLog.Printf("declaration_list0: %+v\n", $$)
                                                     }
                     | declaration                   {
-                                                      log.ParseLog.Printf("declaration_list1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("declaration_list1: %+v\n", $$)
                                                     }
                     ;
 
 declaration         : var_declaration               {
-                                                      log.ParseLog.Printf("declaration0: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("declaration0: %+v\n", $$)
                                                     }
                     | fun_declaration               {
-                                                      log.ParseLog.Printf("declaration1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("declaration1: %+v\n", $$)
                                                     }
                     ;
 
 var_declaration     : type_specifier ID SEMI        {
-                                                      log.ParseLog.Printf("var_declaration0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewExpVarNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
@@ -81,7 +80,6 @@ var_declaration     : type_specifier ID SEMI        {
                                                     }
                     | type_specifier ID LBRACKET NUM RBRACKET SEMI
                                                     {
-                                                      log.ParseLog.Printf("var_declaration1: %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, yylex)
                                                       $$ = syntree.NewExpVarArrayNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
@@ -93,12 +91,10 @@ var_declaration     : type_specifier ID SEMI        {
                     ;
 
 type_specifier      : INT                           {
-                                                      log.ParseLog.Printf("type_specifier0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.INTEGER_TYPE
                                                       log.ParseLog.Printf("type_specifier0: %+v\n", $$)
                                                     }
                     | VOID                          {
-                                                      log.ParseLog.Printf("type_specifier1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.VOID_TYPE
                                                       log.ParseLog.Printf("type_specifier1: %+v\n", $$)
                                                     }
@@ -106,7 +102,6 @@ type_specifier      : INT                           {
 
 fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                                                     {
-                                                      log.ParseLog.Printf("fun_declaration0: %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, yylex)
                                                       $$ = syntree.NewStmtFunctionNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
@@ -118,11 +113,10 @@ fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                     ;
 
 params              : param_list                    {
-                                                      log.ParseLog.Printf("params0: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("params0: %+v\n", $$)
 																										}
                     | VOID                          {
-                                                      log.ParseLog.Printf("params1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewExpParamNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType(syntree.VOID_TYPE)
@@ -131,7 +125,6 @@ params              : param_list                    {
                     ;
 
 param_list          : param_list COMMA param        {
-                                                      log.ParseLog.Printf("param_list0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       t := $1
                                                       if t != nil {
                                                         for t.Sibling() != nil {
@@ -142,15 +135,15 @@ param_list          : param_list COMMA param        {
                                                       } else {
                                                         $$ = $3
                                                       }
+                                                      log.ParseLog.Printf("param_list0: %+v\n", $$)
 																										}
                     | param                         {
-                                                      log.ParseLog.Printf("param_list1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("param_list1: %+v\n", $$)
 																										}
                     ;
 
 param               : type_specifier ID             {
-                                                      log.ParseLog.Printf("param0: %+v %+v %+v\n", $1, $2, yylex)
                                                       $$ = syntree.NewExpParamNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
@@ -159,7 +152,6 @@ param               : type_specifier ID             {
 																										}
                     | type_specifier ID LBRACKET RBRACKET
                                                     {
-                                                      log.ParseLog.Printf("param1: %+v %+v %+v %+v %+v\n", $1, $2, $3, $3, yylex)
                                                       $$ = syntree.NewExpParamArrayNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
@@ -170,7 +162,6 @@ param               : type_specifier ID             {
 
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                     {
-                                                      log.ParseLog.Printf("compound_stmt0: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, yylex)
                                                       $$ = syntree.NewStmtCompoundNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($2)
@@ -181,7 +172,6 @@ compound_stmt       : LBRACE local_declarations statement_list RBRACE
 
 local_declarations  : local_declarations var_declaration
                                                     {
-                                                      log.ParseLog.Printf("local_declarations0: %+v %+v %+v\n", $1, $2, yylex)
                                                       t := $1
                                                       if t != nil {
                                                         for t.Sibling() != nil {
@@ -192,15 +182,15 @@ local_declarations  : local_declarations var_declaration
                                                       } else {
                                                         $$ = $2
                                                       }
+                                                      log.ParseLog.Printf("local_declarations0: %+v\n", $$)
 																										}
                     | empty                         {
-                                                      log.ParseLog.Printf("local_declarations1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("local_declarations1: %+v\n", $$)
 																										}
                     ;
 
 statement_list      : statement_list statement      {
-                                                      log.ParseLog.Printf("statement_list0: %+v %+v %+v\n", $1, $2, yylex)
                                                       t := $1
                                                       if t != nil {
                                                         for t.Sibling() != nil {
@@ -211,48 +201,48 @@ statement_list      : statement_list statement      {
                                                       } else {
                                                         $$ = $2
                                                       }
+                                                      log.ParseLog.Printf("statement_list0: %+v\n", $$)
 																										}
                     | empty                         {
-                                                      log.ParseLog.Printf("statement_list1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement_list1: %+v\n", $$)
                                                     }
                     ;
 
 statement           : expression_stmt               {
-                                                      log.ParseLog.Printf("statement0: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement0: %+v\n", $$)
 																										}
                     | compound_stmt                 {
-                                                      log.ParseLog.Printf("statement1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement1: %+v\n", $$)
 																										}
                     | selection_stmt                {
-                                                      log.ParseLog.Printf("statement2: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement2: %+v\n", $$)
 																										}
                     | iteration_stmt                {
-                                                      log.ParseLog.Printf("statement3: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement3: %+v\n", $$)
 																										}
                     | return_stmt                   {
-                                                      log.ParseLog.Printf("statement4: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("statement4: %+v\n", $$)
 																										}
                     ;
 
 expression_stmt     : expression SEMI               {
-                                                      log.ParseLog.Printf("expression_stmt0: %+v %+v %+v\n", $1, $2, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("expression_stmt0: %+v\n", $$)
 																										}
                     | SEMI                          {
-                                                      log.ParseLog.Printf("expression_stmt1: %+v %+v\n", $1, yylex)
                                                       $$ = nil
+                                                      log.ParseLog.Printf("expression_stmt1: nil\n")
 																										}
                     ;
 
 selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                     {
-                                                      log.ParseLog.Printf("selection_stmt0: %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, yylex)
                                                       $$ = syntree.NewStmtSelectionNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
@@ -261,7 +251,6 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
 																										}
                     | IF LPAREN expression RPAREN statement ELSE statement
                                                     {
-                                                      log.ParseLog.Printf("selection_stmt1: %+v %+v %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, $6, $7, yylex)
                                                       $$ = syntree.NewStmtSelectionNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
@@ -273,7 +262,6 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
 
 iteration_stmt      : WHILE LPAREN expression RPAREN statement
                                                     {
-                                                      log.ParseLog.Printf("iteration_stmt0: %+v %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, $5, yylex)
                                                       $$ = syntree.NewStmtIterationNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
@@ -283,13 +271,11 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
                     ;
 
 return_stmt         : RETURN SEMI                   {
-                                                      log.ParseLog.Printf("return_stmt0: %+v %+v %+v\n", $1, $2, yylex)
                                                       $$ = syntree.NewStmtReturnNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       log.ParseLog.Printf("return_stmt0: %+v\n", $$)
 																										}
                     | RETURN expression SEMI        {
-                                                      log.ParseLog.Printf("return_stmt1: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewStmtReturnNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($2)
@@ -298,7 +284,6 @@ return_stmt         : RETURN SEMI                   {
                     ;
 
 expression          : var ASSIGN expression         {
-                                                      log.ParseLog.Printf("expression0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewExpAssignNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($1)
@@ -306,13 +291,12 @@ expression          : var ASSIGN expression         {
                                                       log.ParseLog.Printf("expression0: %+v\n", $$)
                                                     }
                     | simple_expression             {
-                                                      log.ParseLog.Printf("expression1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("expression1: %+v\n", $$)
                                                     }
                     ;
 
 var                 : ID                            {
-                                                      log.ParseLog.Printf("var0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewExpIdNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
@@ -320,7 +304,6 @@ var                 : ID                            {
                                                     }
                     | ID LBRACKET expression RBRACKET
                                                     {
-                                                      log.ParseLog.Printf("var1: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, yylex)
                                                       $$ = syntree.NewExpIdArrayNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
@@ -331,7 +314,6 @@ var                 : ID                            {
 
 simple_expression   : additive_expression relop additive_expression
                                                     {
-                                                      log.ParseLog.Printf("simple_expression0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewExpOpNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
@@ -340,45 +322,38 @@ simple_expression   : additive_expression relop additive_expression
                                                       log.ParseLog.Printf("simple_expression0: %+v\n", $$)
                                                     }
                     | additive_expression           {
-                                                      log.ParseLog.Printf("simple_expression6: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("simple_expression1: %+v\n", $$)
                                                     }
                     ;
 
 relop               : LT                            {
-                                                      log.ParseLog.Printf("relop0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.LT
                                                       log.ParseLog.Printf("relop0: %+v\n", $$)
                                                     }
                     | LTE                           {
-                                                      log.ParseLog.Printf("relop1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.LTE
                                                       log.ParseLog.Printf("relop1: %+v\n", $$)
                                                     }
                     | GT                            {
-                                                      log.ParseLog.Printf("relop2: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.GT
                                                       log.ParseLog.Printf("relop2: %+v\n", $$)
                                                     }
                     | GTE                           {
-                                                      log.ParseLog.Printf("relop3: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.GTE
                                                       log.ParseLog.Printf("relop3: %+v\n", $$)
                                                     }
                     | EQ                            {
-                                                      log.ParseLog.Printf("relop4: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.EQ
                                                       log.ParseLog.Printf("relop4: %+v\n", $$)
                                                     }
                     | NEQ                           {
-                                                      log.ParseLog.Printf("relop5: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NEQ
                                                       log.ParseLog.Printf("relop5: %+v\n", $$)
                                                     }
 
 additive_expression : additive_expression addop term
                                                     {
-																											log.ParseLog.Printf("additive_expression0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewExpOpNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
@@ -387,24 +362,21 @@ additive_expression : additive_expression addop term
                                                       log.ParseLog.Printf("additive_expression0: %+v\n", $$)
 																										}
                     | term                          {
-																											log.ParseLog.Printf("additive_expression1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("additive_expression1: %+v\n", $$)
 																										}
                     ;
 
 addop               : PLUS                          {
-                                                      log.ParseLog.Printf("addop0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.PLUS
                                                       log.ParseLog.Printf("addop0: %+v\n", $$)
                                                     }
                     | MINUS                         {
-                                                      log.ParseLog.Printf("addop1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.MINUS
                                                       log.ParseLog.Printf("addop1: %+v\n", $$)
                                                     }
 
 term                : term mulop factor             {
-																											log.ParseLog.Printf("term0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = syntree.NewExpOpNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
@@ -413,46 +385,42 @@ term                : term mulop factor             {
                                                       log.ParseLog.Printf("term0: %+v\n", $$)
 																										}
                     | factor                        {
-																											log.ParseLog.Printf("term1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("term1: %+v\n", $$)
 																										}
                     ;
 
 mulop               : TIMES                         {
-                                                      log.ParseLog.Printf("mulop0: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.TIMES
                                                       log.ParseLog.Printf("mulop0: %+v\n", $$)
                                                     }
                     | OVER                          {
-                                                      log.ParseLog.Printf("mulop1: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.OVER
                                                       log.ParseLog.Printf("mulop1: %+v\n", $$)
                                                     }
 
 factor              : LPAREN expression RPAREN      {
-																											log.ParseLog.Printf("factor0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       $$ = $2
+                                                      log.ParseLog.Printf("factor0: %+v\n", $$)
 																										}
                     | var                           {
-																											log.ParseLog.Printf("factor1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("factor1: %+v\n", $$)
 																										}
                     | call                          {
-																											log.ParseLog.Printf("factor2: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("factor2: %+v\n", $$)
 																										}
                     | NUM                           {
-																											log.ParseLog.Printf("factor3: %+v %+v\n", $1, yylex)
                                                       $$ = syntree.NewExpConstNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       v, _ := strconv.Atoi(yylex.(*Lexer).Text())
                                                       $$.(syntree.Value).SetValue(v)
-                                                      log.ParseLog.Printf("factor3: %+v %+v\n", $$)
+                                                      log.ParseLog.Printf("factor3: %+v\n", $$)
 																										}
                     ;
 
 call                : ID LPAREN args RPAREN         {
-																											log.ParseLog.Printf("call0: %+v %+v %+v %+v %+v\n", $1, $2, $3, $4, yylex)
                                                       $$ = syntree.NewExpCallNode()
                                                       $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
@@ -462,17 +430,16 @@ call                : ID LPAREN args RPAREN         {
                     ;
 
 args                : args_list                     {
-																											log.ParseLog.Printf("args0: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("args0: %+v\n", $$)
 																										}
                     | empty                         {
-																											log.ParseLog.Printf("args1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("args1: %+v\n", $$)
 																										}
                     ;
 
 args_list           : args_list COMMA expression    {
-                                                      log.ParseLog.Printf("args_list0: %+v %+v %+v %+v\n", $1, $2, $3, yylex)
                                                       t := $1
                                                       if t != nil {
                                                         for t.Sibling() != nil {
@@ -483,16 +450,17 @@ args_list           : args_list COMMA expression    {
                                                       } else {
                                                         $$ = $3
                                                       }
+                                                      log.ParseLog.Printf("args_list0: %+v\n", $$)
                                                     }
                     | expression                    {
-                                                      log.ParseLog.Printf("args_list1: %+v %+v\n", $1, yylex)
                                                       $$ = $1
+                                                      log.ParseLog.Printf("args_list1: %+v\n", $$)
                                                     }
                     ;
 
 empty               : /* empty */                   {
-                                                      log.ParseLog.Printf("empty0: %+v\n", yylex)
                                                       $$ = nil
+                                                      log.ParseLog.Printf("empty0: nil\n")
                                                     }
                     ;
 

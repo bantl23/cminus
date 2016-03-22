@@ -19,5 +19,5 @@ func NewStmtIterationNode() Node {
 
 func (n StmtIterationNode) String() string {
 	row, col := n.Pos()
-	return fmt.Sprintf("iteration [%+v:%+v]\n", row, col)
+	return fmt.Sprintf("iteration [%+v:%+v]", row, col)
 }
