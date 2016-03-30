@@ -9,10 +9,10 @@ type ExpCallNode struct {
 	name string
 }
 
-func NewExpCallNode() Node {
+func NewExpCallNode(row int, col int, name string) Node {
 	n := new(ExpCallNode)
-	n.position = Position{-1, -1}
-	n.name = ""
+	n.position = Position{row, col}
+	n.name = name
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -20,10 +20,6 @@ func NewExpCallNode() Node {
 
 func (n ExpCallNode) Name() string {
 	return n.name
-}
-
-func (n *ExpCallNode) SetName(name string) {
-	n.name = name
 }
 
 func (n ExpCallNode) String() string {

@@ -13,15 +13,21 @@ type Key struct {
 	Variable string
 }
 
+func (k Key) String() string {
+	return fmt.Sprintf("%+v:%+v", k.Scope, k.Variable)
+}
+
 type Value struct {
-	Lines  []int
-	MemLoc MemoryLocation
-	Next   *Key
+	Position []syntree.Position
+	MemLoc   MemoryLocation
+	Next     *Key
 }
 
 type SymbolTable map[Key]*Value
 
 var GlbMemLoc MemoryLocation = 0
+
+var CurrentScope string = "global"
 
 func (m *MemoryLocation) Inc() {
 	*m++
@@ -37,6 +43,8 @@ func (m *MemoryLocation) Get() int {
 
 func NewSymbolTable() *SymbolTable {
 	s := make(SymbolTable)
+	s.Insert(CurrentScope, "input", *syntree.NewPosition(-1, -1))
+	s.Insert(CurrentScope, "output", *syntree.NewPosition(-1, -1))
 	return &s
 }
 
@@ -50,10 +58,10 @@ func (s *SymbolTable) Analyze(node syntree.Node) {
 
 func (s *SymbolTable) PrintTable() {
 	table := *s
-	fmt.Printf("    Var Loc LineNumbers\n")
-	fmt.Printf("    ===================\n")
+	fmt.Printf("    [Scope:Var] MemLoc FilePos Next\n")
+	fmt.Printf("    ===============================\n")
 	for i, e := range table {
-		fmt.Printf("    %+v %+v %+v\n", i, e.MemLoc, e.Lines)
+		fmt.Printf("    [%+v] %+v %+v %+v\n", i, e.MemLoc, e.Position, e.Next)
 	}
 }
 
@@ -61,10 +69,10 @@ func (s *SymbolTable) Insert(scope string, variable string, pos syntree.Position
 	table := *s
 	_, ok := table[Key{scope, variable}]
 	if ok == true {
-		table[Key{scope, variable}].Lines = append(table[Key{scope, variable}].Lines, pos.Row())
+		table[Key{scope, variable}].Position = append(table[Key{scope, variable}].Position, pos)
 	} else {
 		table[Key{scope, variable}] = new(Value)
-		table[Key{scope, variable}].Lines = append(table[Key{scope, variable}].Lines, pos.Row())
+		table[Key{scope, variable}].Position = append(table[Key{scope, variable}].Position, pos)
 		table[Key{scope, variable}].MemLoc = GlbMemLoc
 		GlbMemLoc.Inc()
 	}
@@ -81,6 +89,11 @@ func (s *SymbolTable) Obtain(scope string, variable string) MemoryLocation {
 
 func (s *SymbolTable) InsertNode(node syntree.Node) {
 	log.AnalyzeLog.Printf("insert: %+v", node)
+	n, ok := node.(syntree.NameGet)
+	if ok == true {
+		s.Insert(CurrentScope, n.Name(), node.Pos())
+		log.AnalyzeLog.Printf("insert_name: %+v", node)
+	}
 }
 
 func (s *SymbolTable) CheckNode(node syntree.Node) {

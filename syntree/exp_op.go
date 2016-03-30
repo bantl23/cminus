@@ -9,10 +9,10 @@ type ExpOpNode struct {
 	tokType TokenType
 }
 
-func NewExpOpNode() Node {
+func NewExpOpNode(row int, col int, tokType TokenType) Node {
 	n := new(ExpOpNode)
-	n.position = Position{-1, -1}
-	n.tokType = UNK_TOKEN_TYPE
+	n.position = Position{row, col}
+	n.tokType = tokType
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -20,10 +20,6 @@ func NewExpOpNode() Node {
 
 func (n ExpOpNode) TokType() TokenType {
 	return n.tokType
-}
-
-func (n *ExpOpNode) SetTokType(tokType TokenType) {
-	n.tokType = tokType
 }
 
 func (n ExpOpNode) String() string {

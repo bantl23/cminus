@@ -8,9 +8,9 @@ type StmtSelectionNode struct {
 	NodeBase
 }
 
-func NewStmtSelectionNode() Node {
+func NewStmtSelectionNode(row int, col int) Node {
 	n := new(StmtSelectionNode)
-	n.position = Position{-1, -1}
+	n.position = Position{row, col}
 	n.sibling = nil
 	n.children = nil
 	return n

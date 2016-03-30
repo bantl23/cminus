@@ -10,11 +10,11 @@ type StmtFunctionNode struct {
 	expType ExpressionType
 }
 
-func NewStmtFunctionNode() Node {
+func NewStmtFunctionNode(row int, col int, expType ExpressionType, name string) Node {
 	n := new(StmtFunctionNode)
-	n.position = Position{-1, -1}
-	n.name = ""
-	n.expType = UNK_EXPRESSION_TYPE
+	n.position = Position{row, col}
+	n.name = name
+	n.expType = expType
 	n.sibling = nil
 	n.children = nil
 	return n

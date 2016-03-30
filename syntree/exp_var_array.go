@@ -11,11 +11,12 @@ type ExpVarArrayNode struct {
 	expType ExpressionType
 }
 
-func NewExpVarArrayNode() Node {
+func NewExpVarArrayNode(row int, col int, expType ExpressionType, name string, value int) Node {
 	n := new(ExpVarArrayNode)
-	n.position = Position{-1, -1}
-	n.name = ""
-	n.expType = UNK_EXPRESSION_TYPE
+	n.position = Position{row, col}
+	n.name = name
+	n.value = value
+	n.expType = expType
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -25,24 +26,12 @@ func (n ExpVarArrayNode) Name() string {
 	return n.name
 }
 
-func (n *ExpVarArrayNode) SetName(name string) {
-	n.name = name
-}
-
 func (n ExpVarArrayNode) Value() int {
 	return n.value
 }
 
-func (n *ExpVarArrayNode) SetValue(value int) {
-	n.value = value
-}
-
 func (n ExpVarArrayNode) ExpType() ExpressionType {
 	return n.expType
-}
-
-func (n *ExpVarArrayNode) SetExpType(expType ExpressionType) {
-	n.expType = expType
 }
 
 func (n ExpVarArrayNode) String() string {

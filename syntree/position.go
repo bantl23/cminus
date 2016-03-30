@@ -9,6 +9,13 @@ type Position struct {
 	col int
 }
 
+func NewPosition(row int, col int) *Position {
+	p := new(Position)
+	p.row = row
+	p.col = col
+	return p
+}
+
 func (p *Position) Row() int {
 	return p.row
 }

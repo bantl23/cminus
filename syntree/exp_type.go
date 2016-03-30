@@ -18,7 +18,10 @@ func (expressionType ExpressionType) String() string {
 	return expressionTypes[expressionType]
 }
 
-type ExpType interface {
+type ExpTypeGet interface {
 	ExpType() ExpressionType
+}
+
+type ExpTypeSet interface {
 	SetExpType(ExpressionType)
 }

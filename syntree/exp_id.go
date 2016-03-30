@@ -9,10 +9,10 @@ type ExpIdNode struct {
 	name string
 }
 
-func NewExpIdNode() Node {
+func NewExpIdNode(row int, col int, name string) Node {
 	n := new(ExpIdNode)
-	n.position = Position{-1, -1}
-	n.name = ""
+	n.position = Position{row, col}
+	n.name = name
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -20,10 +20,6 @@ func NewExpIdNode() Node {
 
 func (n ExpIdNode) Name() string {
 	return n.name
-}
-
-func (n *ExpIdNode) SetName(name string) {
-	n.name = name
 }
 
 func (n ExpIdNode) String() string {

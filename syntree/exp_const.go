@@ -9,10 +9,10 @@ type ExpConstNode struct {
 	value int
 }
 
-func NewExpConstNode() Node {
+func NewExpConstNode(row int, col int, value int) Node {
 	n := new(ExpConstNode)
-	n.position = Position{-1, -1}
-	n.value = -1
+	n.position = Position{row, col}
+	n.value = value
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -20,10 +20,6 @@ func NewExpConstNode() Node {
 
 func (n ExpConstNode) Value() int {
 	return n.value
-}
-
-func (n *ExpConstNode) SetValue(value int) {
-	n.value = value
 }
 
 func (n ExpConstNode) String() string {
