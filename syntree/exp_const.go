@@ -11,8 +11,7 @@ type ExpConstNode struct {
 
 func NewExpConstNode() Node {
 	n := new(ExpConstNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.value = -1
 	n.sibling = nil
 	n.children = nil
@@ -28,6 +27,5 @@ func (n *ExpConstNode) SetValue(value int) {
 }
 
 func (n ExpConstNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("constant %+v [%+v:%+v]", n.Value(), row, col)
+	return fmt.Sprintf("constant %+v [%+v]", n.Value(), n.Pos())
 }

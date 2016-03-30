@@ -10,14 +10,12 @@ type StmtIterationNode struct {
 
 func NewStmtIterationNode() Node {
 	n := new(StmtIterationNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.sibling = nil
 	n.children = nil
 	return n
 }
 
 func (n StmtIterationNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("iteration [%+v:%+v]", row, col)
+	return fmt.Sprintf("iteration [%+v]", n.Pos())
 }

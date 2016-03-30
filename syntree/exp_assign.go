@@ -10,14 +10,12 @@ type ExpAssignNode struct {
 
 func NewExpAssignNode() Node {
 	n := new(ExpAssignNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.sibling = nil
 	n.children = nil
 	return n
 }
 
 func (n ExpAssignNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("assign [%+v:%+v]", row, col)
+	return fmt.Sprintf("assign [%+v]", n.Pos())
 }

@@ -11,8 +11,7 @@ type ExpOpNode struct {
 
 func NewExpOpNode() Node {
 	n := new(ExpOpNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.tokType = UNK_TOKEN_TYPE
 	n.sibling = nil
 	n.children = nil
@@ -28,6 +27,5 @@ func (n *ExpOpNode) SetTokType(tokType TokenType) {
 }
 
 func (n ExpOpNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("op %+v [%+v:%+v]", n.TokType(), row, col)
+	return fmt.Sprintf("op %+v [%+v]", n.TokType(), n.Pos())
 }

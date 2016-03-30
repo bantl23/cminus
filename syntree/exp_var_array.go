@@ -13,8 +13,7 @@ type ExpVarArrayNode struct {
 
 func NewExpVarArrayNode() Node {
 	n := new(ExpVarArrayNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.name = ""
 	n.expType = UNK_EXPRESSION_TYPE
 	n.sibling = nil
@@ -47,6 +46,5 @@ func (n *ExpVarArrayNode) SetExpType(expType ExpressionType) {
 }
 
 func (n ExpVarArrayNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("var_array %+v %+v %+v [%+v:%+v]", n.Name(), n.Value(), n.ExpType(), row, col)
+	return fmt.Sprintf("var_array %+v %+v %+v [%+v]", n.Name(), n.Value(), n.ExpType(), n.Pos())
 }

@@ -11,8 +11,7 @@ type ExpIdNode struct {
 
 func NewExpIdNode() Node {
 	n := new(ExpIdNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.name = ""
 	n.sibling = nil
 	n.children = nil
@@ -28,6 +27,5 @@ func (n *ExpIdNode) SetName(name string) {
 }
 
 func (n ExpIdNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("id %+v [%+v:%+v]", n.Name(), row, col)
+	return fmt.Sprintf("id %+v [%+v]", n.Name(), n.Pos())
 }

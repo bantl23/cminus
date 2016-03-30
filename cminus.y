@@ -73,7 +73,7 @@ declaration         : var_declaration               {
 
 var_declaration     : type_specifier ID SEMI        {
                                                       $$ = syntree.NewExpVarNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
                                                       $$.(syntree.Name).SetName($2)
                                                       log.ParseLog.Printf("var_declaration0: %+v\n", $$)
@@ -81,7 +81,7 @@ var_declaration     : type_specifier ID SEMI        {
                     | type_specifier ID LBRACKET NUM RBRACKET SEMI
                                                     {
                                                       $$ = syntree.NewExpVarArrayNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
                                                       $$.(syntree.Name).SetName($2)
                                                       v, _ := strconv.Atoi($4)
@@ -103,7 +103,7 @@ type_specifier      : INT                           {
 fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                                                     {
                                                       $$ = syntree.NewStmtFunctionNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
                                                       $$.(syntree.Name).SetName($2)
                                                       $$.AddChild($4)
@@ -118,7 +118,7 @@ params              : param_list                    {
 																										}
                     | VOID                          {
                                                       $$ = syntree.NewExpParamNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType(syntree.VOID_TYPE)
                                                       log.ParseLog.Printf("params1: %+v\n", $$)
 																										}
@@ -145,7 +145,7 @@ param_list          : param_list COMMA param        {
 
 param               : type_specifier ID             {
                                                       $$ = syntree.NewExpParamNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
                                                       $$.(syntree.Name).SetName($2)
                                                       log.ParseLog.Printf("param0: %+v\n", $$)
@@ -153,7 +153,7 @@ param               : type_specifier ID             {
                     | type_specifier ID LBRACKET RBRACKET
                                                     {
                                                       $$ = syntree.NewExpParamArrayNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.ExpType).SetExpType($1)
                                                       $$.(syntree.Name).SetName($2)
                                                       log.ParseLog.Printf("param1: %+v\n", $$)
@@ -163,7 +163,7 @@ param               : type_specifier ID             {
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                     {
                                                       $$ = syntree.NewStmtCompoundNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($2)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("compound_stmt0: %+v\n", $$)
@@ -244,7 +244,7 @@ expression_stmt     : expression SEMI               {
 selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                     {
                                                       $$ = syntree.NewStmtSelectionNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       log.ParseLog.Printf("selection_stmt0: %+v\n", $$)
@@ -252,7 +252,7 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                     | IF LPAREN expression RPAREN statement ELSE statement
                                                     {
                                                       $$ = syntree.NewStmtSelectionNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       $$.AddChild($7)
@@ -263,7 +263,7 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
 iteration_stmt      : WHILE LPAREN expression RPAREN statement
                                                     {
                                                       $$ = syntree.NewStmtIterationNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       log.ParseLog.Printf("iteration_stmt0: %+v\n", $$)
@@ -272,12 +272,12 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
 
 return_stmt         : RETURN SEMI                   {
                                                       $$ = syntree.NewStmtReturnNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       log.ParseLog.Printf("return_stmt0: %+v\n", $$)
 																										}
                     | RETURN expression SEMI        {
                                                       $$ = syntree.NewStmtReturnNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($2)
                                                       log.ParseLog.Printf("return_stmt1: %+v\n", $$)
                                                     }
@@ -285,7 +285,7 @@ return_stmt         : RETURN SEMI                   {
 
 expression          : var ASSIGN expression         {
                                                       $$ = syntree.NewExpAssignNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("expression0: %+v\n", $$)
@@ -298,14 +298,14 @@ expression          : var ASSIGN expression         {
 
 var                 : ID                            {
                                                       $$ = syntree.NewExpIdNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
                                                       log.ParseLog.Printf("var0: %+v\n", $$)
                                                     }
                     | ID LBRACKET expression RBRACKET
                                                     {
                                                       $$ = syntree.NewExpIdArrayNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("var1: %+v\n", $$)
@@ -315,7 +315,7 @@ var                 : ID                            {
 simple_expression   : additive_expression relop additive_expression
                                                     {
                                                       $$ = syntree.NewExpOpNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
@@ -355,7 +355,7 @@ relop               : LT                            {
 additive_expression : additive_expression addop term
                                                     {
                                                       $$ = syntree.NewExpOpNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
@@ -378,7 +378,7 @@ addop               : PLUS                          {
 
 term                : term mulop factor             {
                                                       $$ = syntree.NewExpOpNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.TokType).SetTokType($2)
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
@@ -413,7 +413,7 @@ factor              : LPAREN expression RPAREN      {
 																										}
                     | NUM                           {
                                                       $$ = syntree.NewExpConstNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       v, _ := strconv.Atoi(yylex.(*Lexer).Text())
                                                       $$.(syntree.Value).SetValue(v)
                                                       log.ParseLog.Printf("factor3: %+v\n", $$)
@@ -422,7 +422,12 @@ factor              : LPAREN expression RPAREN      {
 
 call                : ID LPAREN args RPAREN         {
                                                       $$ = syntree.NewExpCallNode()
-                                                      $$.(syntree.Location).SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $1 == "input" {
+                                                        $$ = syntree.NewExpCallInputNode()
+                                                      } else if $1 == "output" {
+                                                        $$ = syntree.NewExpCallOutputNode()
+                                                      }
+                                                      $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("call0: %+v\n", $$)

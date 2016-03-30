@@ -4,136 +4,27 @@ import (
 	"fmt"
 )
 
-type ExpressionType int
-
-const (
-	VOID_TYPE ExpressionType = iota
-	INTEGER_TYPE
-	UNK_EXPRESSION_TYPE
-)
-
-var expressionTypes = [...]string{
-	"VoidExpType",
-	"IntExpType",
-	"UnknownExpType",
-}
-
-func (expressionType ExpressionType) String() string {
-	return expressionTypes[expressionType]
-}
-
-type TokenType int
-
-const (
-	ENDFILE TokenType = iota
-	ERROR
-	ELSE
-	IF
-	INT
-	RETURN
-	VOID
-	WHILE
-	PLUS
-	MINUS
-	TIMES
-	OVER
-	LT
-	LTE
-	GT
-	GTE
-	EQ
-	NEQ
-	SEMI
-	COMMA
-	LPAREN
-	RPAREN
-	LBRACKET
-	RBRACKET
-	LBRACE
-	RBRACE
-	UNK_TOKEN_TYPE
-)
-
-var tokenTypes = [...]string{
-	"EndOfFile",
-	"Error",
-	"Else",
-	"If",
-	"Int",
-	"Return",
-	"Void",
-	"While",
-	"Plus",
-	"Minus",
-	"Times",
-	"Over",
-	"LessThan",
-	"LessThanEqual",
-	"GreaterThan",
-	"GreaterThanEqual",
-	"Equals",
-	"NotEquals",
-	"Semicolon",
-	"Comma",
-	"LeftParen",
-	"RightParen",
-	"LeftBracket",
-	"RightBracket",
-	"LeftBrace",
-	"RightBrace",
-	"UnknownTokenType",
-}
-
-func (tokenType TokenType) String() string {
-	return tokenTypes[tokenType]
-}
-
 type Node interface {
 	Sibling() Node
 	SetSibling(Node)
 	Children() []Node
 	AddChild(Node)
-}
-
-type Location interface {
-	Pos() (int, int)
+	Pos() Position
 	SetPos(int, int)
 }
 
-type Name interface {
-	Name() string
-	SetName(string)
-}
-
-type Value interface {
-	Value() int
-	SetValue(int)
-}
-
-type ExpType interface {
-	ExpType() ExpressionType
-	SetExpType(ExpressionType)
-}
-
-type TokType interface {
-	TokType() TokenType
-	SetTokType(TokenType)
-}
-
 type NodeBase struct {
-	row      int
-	col      int
+	position Position
 	sibling  Node
 	children []Node
 }
 
-func (n NodeBase) Pos() (int, int) {
-	return n.row, n.col
+func (n NodeBase) Pos() Position {
+	return n.position
 }
 
 func (n *NodeBase) SetPos(row int, col int) {
-	n.row = row
-	n.col = col
+	n.position = Position{row, col}
 }
 
 func (n NodeBase) Sibling() Node {

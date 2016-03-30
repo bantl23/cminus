@@ -11,8 +11,7 @@ type ExpCallNode struct {
 
 func NewExpCallNode() Node {
 	n := new(ExpCallNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.name = ""
 	n.sibling = nil
 	n.children = nil
@@ -28,6 +27,5 @@ func (n *ExpCallNode) SetName(name string) {
 }
 
 func (n ExpCallNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("call %+v [%+v:%+v]", n.Name(), row, col)
+	return fmt.Sprintf("call %+v [%+v]", n.Name(), n.Pos())
 }

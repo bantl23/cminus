@@ -10,14 +10,12 @@ type StmtReturnNode struct {
 
 func NewStmtReturnNode() Node {
 	n := new(StmtReturnNode)
-	n.row = -1
-	n.col = -1
+	n.position = Position{-1, -1}
 	n.sibling = nil
 	n.children = nil
 	return n
 }
 
 func (n StmtReturnNode) String() string {
-	row, col := n.Pos()
-	return fmt.Sprintf("return [%+v:%+v]", row, col)
+	return fmt.Sprintf("return [%+v]", n.Pos())
 }
