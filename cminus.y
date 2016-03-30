@@ -422,11 +422,6 @@ factor              : LPAREN expression RPAREN      {
 
 call                : ID LPAREN args RPAREN         {
                                                       $$ = syntree.NewExpCallNode()
-                                                      if $1 == "input" {
-                                                        $$ = syntree.NewExpCallInputNode()
-                                                      } else if $1 == "output" {
-                                                        $$ = syntree.NewExpCallOutputNode()
-                                                      }
                                                       $$.SetPos(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.(syntree.Name).SetName($1)
                                                       $$.AddChild($3)
