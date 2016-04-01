@@ -35,6 +35,17 @@ func (n ExpParamNode) Save() bool {
 	return false
 }
 
+func (n ExpParamNode) IsInt() bool {
+	if n.expType == INTEGER_TYPE {
+		return true
+	}
+	return false
+}
+
+func (n ExpParamNode) IsDeclaration() bool {
+	return true
+}
+
 func (n ExpParamNode) String() string {
 	return fmt.Sprintf("param %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

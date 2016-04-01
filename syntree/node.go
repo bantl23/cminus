@@ -51,6 +51,22 @@ func (n NodeBase) AddScope() bool {
 	return false
 }
 
+func (n NodeBase) IsFunc() bool {
+	return false
+}
+
+func (n NodeBase) IsArray() bool {
+	return false
+}
+
+func (n NodeBase) IsInt() bool {
+	return false
+}
+
+func (n NodeBase) IsDeclaration() bool {
+	return false
+}
+
 func Print(node Node, indent int) {
 	indent += 2
 	for node != nil {

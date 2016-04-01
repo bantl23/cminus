@@ -22,6 +22,18 @@ func (n ExpCallNode) Name() string {
 	return n.name
 }
 
+func (n ExpCallNode) Save() bool {
+	return true
+}
+
+func (n ExpCallNode) IsFunc() bool {
+	return true
+}
+
+func (n ExpCallNode) IsDeclaration() bool {
+	return false
+}
+
 func (n ExpCallNode) String() string {
 	return fmt.Sprintf("call %+v [%+v]", n.Name(), n.Pos())
 }

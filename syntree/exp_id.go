@@ -22,6 +22,10 @@ func (n ExpIdNode) Name() string {
 	return n.name
 }
 
+func (n ExpIdNode) Save() bool {
+	return true
+}
+
 func (n ExpIdNode) String() string {
 	return fmt.Sprintf("id %+v [%+v]", n.Name(), n.Pos())
 }

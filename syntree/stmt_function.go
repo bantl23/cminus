@@ -24,16 +24,8 @@ func (n StmtFunctionNode) Name() string {
 	return n.name
 }
 
-func (n *StmtFunctionNode) SetName(name string) {
-	n.name = name
-}
-
 func (n StmtFunctionNode) ExpType() ExpressionType {
 	return n.expType
-}
-
-func (n *StmtFunctionNode) SetExpType(expType ExpressionType) {
-	n.expType = expType
 }
 
 func (n StmtFunctionNode) Save() bool {
@@ -41,6 +33,14 @@ func (n StmtFunctionNode) Save() bool {
 }
 
 func (n StmtFunctionNode) AddScope() bool {
+	return true
+}
+
+func (n StmtFunctionNode) IsFunc() bool {
+	return true
+}
+
+func (n StmtFunctionNode) IsDeclaration() bool {
 	return true
 }
 

@@ -22,6 +22,10 @@ func (n ExpIdArrayNode) Name() string {
 	return n.name
 }
 
+func (n ExpIdArrayNode) Save() bool {
+	return true
+}
+
 func (n ExpIdArrayNode) String() string {
 	return fmt.Sprintf("id_array %+v [%+v]", n.Name(), n.Pos())
 }
