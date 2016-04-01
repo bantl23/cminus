@@ -1,9 +1,5 @@
 package syntree
 
-type ValueGet interface {
+type Value interface {
 	Value() int
-}
-
-type ValueSet interface {
-	SetValue(int)
 }

@@ -66,10 +66,6 @@ func (tokenType TokenType) String() string {
 	return tokenTypes[tokenType]
 }
 
-type TokTypeGet interface {
+type TokType interface {
 	TokType() TokenType
-}
-
-type TokenTypeSet interface {
-	SetTokType(TokenType)
 }

@@ -34,6 +34,10 @@ func (n ExpVarArrayNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpVarArrayNode) Save() bool {
+	return true
+}
+
 func (n ExpVarArrayNode) String() string {
 	return fmt.Sprintf("var_array %+v %+v %+v [%+v]", n.Name(), n.Value(), n.ExpType(), n.Pos())
 }

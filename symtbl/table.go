@@ -6,95 +6,119 @@ import (
 	"github.com/bantl23/cminus/syntree"
 )
 
-type MemoryLocation int
-
-type Key struct {
-	Scope    string
-	Variable string
-}
-
-func (k Key) String() string {
-	return fmt.Sprintf("%+v:%+v", k.Scope, k.Variable)
-}
-
 type Value struct {
-	Position []syntree.Position
-	MemLoc   MemoryLocation
-	Next     *Key
+	MemLoc MemLoc
+	Lines  []int
 }
 
-type SymbolTable map[Key]*Value
+type SymTbl map[string]*Value
 
-var GlbMemLoc MemoryLocation = 0
-
-var CurrentScope string = "global"
-
-func (m *MemoryLocation) Inc() {
-	*m++
+type SymTblLst struct {
+	SymTbl SymTbl
+	Prev   *SymTblLst
+	Next   []*SymTblLst
 }
 
-func (m *MemoryLocation) Reset() {
-	*m = 0
+var CurSymTblLst *SymTblLst
+var GlbSymTblLst *SymTblLst
+
+func NewSymTblLst(prev *SymTblLst) *SymTblLst {
+	s := new(SymTblLst)
+	s.SymTbl = make(SymTbl)
+	s.Next = nil
+	s.Prev = prev
+	prev.Next = append(prev.Next, s)
+	return s
 }
 
-func (m *MemoryLocation) Get() int {
-	return int(*m)
+func NewGlbSymTblLst() {
+	GlbSymTblLst = new(SymTblLst)
+	GlbSymTblLst.SymTbl = make(SymTbl)
+	GlbSymTblLst.Prev = nil
+	GlbSymTblLst.Next = nil
+	GlbSymTblLst.SymTbl.Insert("input", -1)
+	GlbSymTblLst.SymTbl.Insert("output", -1)
+	CurSymTblLst = GlbSymTblLst
 }
 
-func NewSymbolTable() *SymbolTable {
-	s := make(SymbolTable)
-	s.Insert(CurrentScope, "input", *syntree.NewPosition(-1, -1))
-	s.Insert(CurrentScope, "output", *syntree.NewPosition(-1, -1))
-	return &s
+func PrintSymTblLst() {
+	PrintTableList(GlbSymTblLst)
 }
 
-func (s *SymbolTable) Build(node syntree.Node) {
-	syntree.Traverse(node, s.InsertNode, syntree.Nothing)
+var depth = -1
+
+func PrintTableList(lst *SymTblLst) {
+	depth++
+	if lst != nil {
+		tbl := lst.SymTbl
+		fmt.Printf("    Scope level %+v\n", depth)
+		tbl.PrintTable()
+		for _, t := range lst.Next {
+			PrintTableList(t)
+		}
+	}
+	depth--
 }
 
-func (s *SymbolTable) Analyze(node syntree.Node) {
-	syntree.Traverse(node, syntree.Nothing, s.CheckNode)
+func Build(node syntree.Node) {
+	syntree.Traverse(node, Insert, Popout)
 }
 
-func (s *SymbolTable) PrintTable() {
-	table := *s
-	fmt.Printf("    [Scope:Var] MemLoc FilePos Next\n")
-	fmt.Printf("    ===============================\n")
-	for i, e := range table {
-		fmt.Printf("    [%+v] %+v %+v %+v\n", i, e.MemLoc, e.Position, e.Next)
+func Analyze(node syntree.Node) {
+	syntree.Traverse(node, syntree.Nothing, Check)
+}
+
+func Insert(node syntree.Node) {
+	if node.(syntree.Symbol).Save() == true {
+		CurSymTblLst.SymTbl.Insert(node.(syntree.Name).Name(), node.Pos().Row())
+		log.AnalyzeLog.Printf("inserted %+v", node)
+	}
+	if node.(syntree.Symbol).AddScope() == true {
+		n := NewSymTblLst(CurSymTblLst)
+		CurSymTblLst = n
+		log.AnalyzeLog.Printf("added scoped symbol table")
 	}
 }
 
-func (s *SymbolTable) Insert(scope string, variable string, pos syntree.Position) {
+func Popout(node syntree.Node) {
+	if node.(syntree.Symbol).AddScope() == true {
+		CurSymTblLst = CurSymTblLst.Prev
+		log.AnalyzeLog.Printf("returned from scoped symbol table")
+	}
+}
+
+func Check(node syntree.Node) {
+}
+
+func (s *SymTbl) PrintTable() {
+	fmt.Printf("    Variable Name Type Memory Location Lines\n")
+	fmt.Printf("    ============= ==== =============== =====\n")
+	for i, e := range *s {
+		fmt.Printf("    %+v\t 0x%08x\t %+v\n", i, e.MemLoc, e.Lines)
+	}
+	fmt.Printf("\n")
+}
+
+func (s *SymTbl) Insert(variable string, line int) {
 	table := *s
-	_, ok := table[Key{scope, variable}]
+	_, ok := table[variable]
 	if ok == true {
-		table[Key{scope, variable}].Position = append(table[Key{scope, variable}].Position, pos)
+		table[variable].Lines = append(table[variable].Lines, line)
 	} else {
-		table[Key{scope, variable}] = new(Value)
-		table[Key{scope, variable}].Position = append(table[Key{scope, variable}].Position, pos)
-		table[Key{scope, variable}].MemLoc = GlbMemLoc
-		GlbMemLoc.Inc()
+		table[variable] = new(Value)
+		if line != -1 {
+			table[variable].Lines = append(table[variable].Lines, line)
+		}
+		table[variable].MemLoc = glbMemLoc
+		glbMemLoc.Inc()
 	}
 }
 
-func (s *SymbolTable) Obtain(scope string, variable string) MemoryLocation {
+func (s *SymTbl) Obtain(scope string, variable string) MemLoc {
 	table := *s
-	_, ok := table[Key{scope, variable}]
+	_, ok := table[variable]
 	if ok == true {
-		return table[Key{scope, variable}].MemLoc
+		return table[variable].MemLoc
 	}
 	return -1
-}
-
-func (s *SymbolTable) InsertNode(node syntree.Node) {
-	log.AnalyzeLog.Printf("insert: %+v", node)
-	n, ok := node.(syntree.NameGet)
-	if ok == true {
-		s.Insert(CurrentScope, n.Name(), node.Pos())
-		log.AnalyzeLog.Printf("insert_name: %+v", node)
-	}
-}
-
-func (s *SymbolTable) CheckNode(node syntree.Node) {
 }

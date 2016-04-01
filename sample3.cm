@@ -1,0 +1,9 @@
+void hello(void)
+{
+  int x;
+}
+
+void main(void)
+{
+  int x;
+}

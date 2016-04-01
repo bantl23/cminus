@@ -28,6 +28,10 @@ func (n ExpVarNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpVarNode) Save() bool {
+	return true
+}
+
 func (n ExpVarNode) String() string {
 	return fmt.Sprintf("var %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

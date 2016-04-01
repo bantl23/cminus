@@ -16,6 +16,10 @@ func NewStmtCompoundNode(row int, col int) Node {
 	return n
 }
 
+func (n StmtCompoundNode) AddScope() bool {
+	return true
+}
+
 func (n StmtCompoundNode) String() string {
 	return fmt.Sprintf("compound [%+v]", n.Pos())
 }

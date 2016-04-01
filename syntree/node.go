@@ -43,6 +43,14 @@ func (n *NodeBase) AddChild(child Node) {
 	n.children = append(n.children, child)
 }
 
+func (n NodeBase) Save() bool {
+	return false
+}
+
+func (n NodeBase) AddScope() bool {
+	return false
+}
+
 func Print(node Node, indent int) {
 	indent += 2
 	for node != nil {

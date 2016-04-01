@@ -1,9 +1,5 @@
 package syntree
 
-type NameGet interface {
+type Name interface {
 	Name() string
-}
-
-type NameSet interface {
-	SetName(string)
 }

@@ -16,11 +16,11 @@ func NewPosition(row int, col int) *Position {
 	return p
 }
 
-func (p *Position) Row() int {
+func (p Position) Row() int {
 	return p.row
 }
 
-func (p *Position) Col() int {
+func (p Position) Col() int {
 	return p.col
 }
 

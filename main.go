@@ -123,14 +123,14 @@ func main() {
 					if analyze == true {
 						log.InfoLog.Printf("analyzing\n")
 						log.InfoLog.Printf("=========\n")
-						symbolTable := symtbl.NewSymbolTable()
-						symbolTable.Build(root)
-						symbolTable.Analyze(root)
+						symtbl.NewGlbSymTblLst()
+						symtbl.Build(root)
+						symtbl.Analyze(root)
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
-							symbolTable.PrintTable()
+							symtbl.PrintSymTblLst()
 							fmt.Println("<<<<")
 						}
 						if code == true {

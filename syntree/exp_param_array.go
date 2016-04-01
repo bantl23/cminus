@@ -28,6 +28,10 @@ func (n ExpParamArrayNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpParamArrayNode) Save() bool {
+	return true
+}
+
 func (n ExpParamArrayNode) String() string {
 	return fmt.Sprintf("param_array %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

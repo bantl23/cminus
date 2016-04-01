@@ -28,6 +28,13 @@ func (n ExpParamNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpParamNode) Save() bool {
+	if n.expType == INTEGER_TYPE {
+		return true
+	}
+	return false
+}
+
 func (n ExpParamNode) String() string {
 	return fmt.Sprintf("param %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

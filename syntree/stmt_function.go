@@ -36,6 +36,14 @@ func (n *StmtFunctionNode) SetExpType(expType ExpressionType) {
 	n.expType = expType
 }
 
+func (n StmtFunctionNode) Save() bool {
+	return true
+}
+
+func (n StmtFunctionNode) AddScope() bool {
+	return true
+}
+
 func (n StmtFunctionNode) String() string {
 	return fmt.Sprintf("function %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }
