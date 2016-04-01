@@ -10,10 +10,10 @@ const (
 )
 
 var symTypes = [...]string{
-	"function",
-	"integer",
-	"array",
-	"unknown",
+	"fun",
+	"int",
+	"arr",
+	"unk",
 }
 
 func (symType SymbolType) String() string {

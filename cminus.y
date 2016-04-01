@@ -8,6 +8,7 @@ import (
 )
 
 var root syntree.Node
+var savedPos *syntree.Position
 %}
 
 %union {
@@ -93,11 +94,15 @@ type_specifier      : INT                           {
                                                     }
                     ;
 
-fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
+fun_declaration     : type_specifier ID
                                                     {
-                                                      $$ = syntree.NewStmtFunctionNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $1, $2)
-                                                      $$.AddChild($4)
-                                                      $$.AddChild($6)
+                                                      savedPos = syntree.NewPosition(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                    }
+                      LPAREN params RPAREN compound_stmt
+                                                    {
+                                                      $$ = syntree.NewStmtFunctionNode(savedPos.Row(), savedPos.Col(), $<exp>1, $<str>2)
+                                                      $$.AddChild($<node>5)
+                                                      $$.AddChild($<node>7)
                                                       log.ParseLog.Printf("fun_declaration0: %+v\n", $$)
                                                     }
                     ;
