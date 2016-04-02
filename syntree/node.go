@@ -67,6 +67,10 @@ func (n NodeBase) IsDeclaration() bool {
 	return false
 }
 
+func (n NodeBase) IsReturn() bool {
+	return false
+}
+
 func Print(node Node, indent int) {
 	indent += 2
 	for node != nil {

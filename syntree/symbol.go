@@ -7,4 +7,5 @@ type Symbol interface {
 	IsArray() bool
 	IsInt() bool
 	IsDeclaration() bool
+	IsReturn() bool
 }

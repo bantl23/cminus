@@ -16,6 +16,10 @@ func NewStmtReturnNode(row int, col int) Node {
 	return n
 }
 
+func (n StmtReturnNode) IsReturn() bool {
+	return true
+}
+
 func (n StmtReturnNode) String() string {
 	return fmt.Sprintf("return [%+v]", n.Pos())
 }

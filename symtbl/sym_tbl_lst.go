@@ -6,14 +6,6 @@ import (
 	"github.com/bantl23/cminus/syntree"
 )
 
-type Value struct {
-	MemLoc  MemLoc
-	SymType SymbolType
-	Lines   []int
-}
-
-type SymTbl map[string]*Value
-
 type SymTblLst struct {
 	SymTbl SymTbl
 	Name   string
@@ -26,6 +18,14 @@ var CurSymTblLst *SymTblLst
 var TblSep string = "$"
 var GblName string = "$global"
 var InnerName string = "$inner"
+var PrevDeclareName = ""
+var LastDeclareName = "main"
+var MaxInt = 2147483647
+var MinInt = -2147483648
+var MaxArrayInt = MaxInt
+var MinArrayInt = 0
+var FoundRet = false
+var RetHasChild = false
 
 func NewSymTblLst(prev *SymTblLst) *SymTblLst {
 	s := new(SymTblLst)
@@ -106,15 +106,38 @@ func Popout(node syntree.Node) {
 }
 
 func Check(node syntree.Node) {
-}
-
-func (s *SymTbl) PrintTable() {
-	fmt.Printf("    Variable Name Type Memory Location Lines\n")
-	fmt.Printf("    ============= ==== =============== =====\n")
-	for i, e := range *s {
-		fmt.Printf("    %13s %4s 0x%013x %+v\n", i, e.SymType, e.MemLoc, e.Lines)
+	log.AnalyzeLog.Printf("check %+v", node)
+	if PrevDeclareName == LastDeclareName {
+		log.ErrorLog.Printf(">>>> Error main function must be the last declaration [%+v]", node.Pos())
 	}
-	fmt.Printf("\n")
+	if node.(syntree.Symbol).IsDeclaration() {
+		PrevDeclareName = node.(syntree.Name).Name()
+	}
+
+	if node.(syntree.Symbol).IsArray() {
+		if node.(syntree.Value).Value() > MaxArrayInt {
+			log.ErrorLog.Printf(">>>> Error array size %d is greater than %d [%+v]", node.(syntree.Value).Value(), MaxArrayInt, node.Pos())
+		} else if node.(syntree.Value).Value() < MinArrayInt {
+			log.ErrorLog.Printf(">>>> Error array size %d is less than %d [%+v]", node.(syntree.Value).Value(), MinArrayInt, node.Pos())
+		}
+	}
+
+	if node.(syntree.Symbol).IsReturn() {
+		FoundRet = true
+		if node.Children() != nil {
+			RetHasChild = true
+		} else {
+			RetHasChild = false
+		}
+	}
+	if node.(syntree.Symbol).IsFunc() {
+		if FoundRet == true {
+			if node.(syntree.ExpType).ExpType() == syntree.VOID_TYPE {
+				log.ErrorLog.Printf(">>>> Error void function return a value [%+v]", node.Pos())
+			}
+		}
+		FoundRet = false
+	}
 }
 
 func (s *SymTblLst) Insert(node syntree.Node) bool {
@@ -136,7 +159,7 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 	_, ok := table[variable]
 	if node.(syntree.Symbol).IsDeclaration() {
 		if ok == true {
-			log.ErrorLog.Printf(">>>> ERROR %+v already declared", variable)
+			log.ErrorLog.Printf(">>>> ERROR %+v already declared [%+v]", variable, node.Pos())
 		} else {
 			table[variable] = new(Value)
 			if line != -1 {
@@ -165,7 +188,7 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 				lst = lst.Prev
 			}
 			if inserted == false {
-				log.ErrorLog.Printf(">>>> ERROR: %+v not declared", variable)
+				log.ErrorLog.Printf(">>>> ERROR: %+v not declared [%+v]", variable, node.Pos())
 			}
 		}
 	}

@@ -1,0 +1,10 @@
+void hello(void)
+{
+  int y;
+  return 0;
+}
+
+void main(void)
+{
+  int x[2147483648];
+}
