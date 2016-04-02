@@ -132,8 +132,14 @@ func Check(node syntree.Node) {
 	}
 	if node.(syntree.Symbol).IsFunc() {
 		if FoundRet == true {
-			if node.(syntree.ExpType).ExpType() == syntree.VOID_TYPE {
-				log.ErrorLog.Printf(">>>> Error void function return a value [%+v]", node.Pos())
+			if node.(syntree.ExpType).ExpType() == syntree.VOID_TYPE && RetHasChild == true {
+				log.ErrorLog.Printf(">>>> Error void function returns a value [%+v]", node.Pos())
+			} else if node.(syntree.ExpType).ExpType() == syntree.INTEGER_TYPE && RetHasChild == false {
+				log.ErrorLog.Printf(">>>> Error non-void function has and empty return statement [%+v]", node.Pos())
+			}
+		} else {
+			if node.(syntree.ExpType).ExpType() == syntree.INTEGER_TYPE {
+				log.ErrorLog.Printf(">>>> Error non-void function does not have a return statement [%+v]", node.Pos())
 			}
 		}
 		FoundRet = false

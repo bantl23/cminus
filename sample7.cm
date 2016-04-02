@@ -1,7 +1,18 @@
 void hello(void)
 {
-  int y;
+  int h;
   return 0;
+}
+
+int there(void)
+{
+  int t;
+  return;
+}
+
+int buddy(void)
+{
+  int b;
 }
 
 void main(void)
