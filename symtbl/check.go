@@ -5,32 +5,26 @@ import (
 	"github.com/bantl23/cminus/syntree"
 )
 
-var PrevDeclareName = ""
-var LastDeclareName = "main"
-var MaxInt = 2147483647
-var MinInt = -2147483648
-var MaxArrayInt = MaxInt
-var MinArrayInt = 0
-var FoundRet = false
-var RetHasChild = false
-
 func Analyze(node syntree.Node) {
 	syntree.Traverse(node, PreCheck, PostCheck)
 }
 
-func PreCheck(node syntree.Node) {
-	log.AnalyzeLog.Printf("precheck %+v", node)
-}
+var PrevDeclareName = ""
+var LastDeclareName = "main"
 
-func PostCheck(node syntree.Node) {
-	log.AnalyzeLog.Printf("postcheck %+v", node)
+func CheckMainLastDeclaration(node syntree.Node) {
 	if PrevDeclareName == LastDeclareName {
-		log.ErrorLog.Printf(">>>> Error main function must be the last declaration [%+v]", node.Pos())
+		log.ErrorLog.Printf(">>>> Error main function must be the last declaration[%+v]", node.Pos())
 	}
 	if node.(syntree.Symbol).IsDeclaration() {
 		PrevDeclareName = node.(syntree.Name).Name()
 	}
+}
 
+var MaxArrayInt = 2147483647
+var MinArrayInt = 0
+
+func CheckArrayIndexSize(node syntree.Node) {
 	if node.(syntree.Symbol).IsArray() {
 		if node.(syntree.Symbol).IsParam() == false {
 			if node.(syntree.Value).Value() > MaxArrayInt {
@@ -40,27 +34,43 @@ func PostCheck(node syntree.Node) {
 			}
 		}
 	}
+}
 
+var FoundReturn = false
+var ReturnHasChild = false
+
+func CheckReturnValue(node syntree.Node) {
 	if node.(syntree.Symbol).IsReturn() {
-		FoundRet = true
+		FoundReturn = true
 		if node.Children() != nil {
-			RetHasChild = true
+			ReturnHasChild = true
 		} else {
-			RetHasChild = false
+			ReturnHasChild = false
 		}
 	}
 	if node.(syntree.Symbol).IsFunc() {
-		if FoundRet == true {
-			if node.(syntree.ExpType).ExpType() == syntree.VOID_TYPE && RetHasChild == true {
+		if FoundReturn == true {
+			if node.(syntree.ExpType).ExpType() == syntree.VOID_TYPE && ReturnHasChild == true {
 				log.ErrorLog.Printf(">>>> Error void function returns a value [%+v]", node.Pos())
-			} else if node.(syntree.ExpType).ExpType() == syntree.INTEGER_TYPE && RetHasChild == false {
-				log.ErrorLog.Printf(">>>> Error non-void function has and empty return statement [%+v]", node.Pos())
+			} else if node.(syntree.ExpType).ExpType() == syntree.INTEGER_TYPE && ReturnHasChild == false {
+				log.ErrorLog.Printf(">>>> Error non-void function has empty return statement [%+v]", node.Pos())
 			}
 		} else {
 			if node.(syntree.ExpType).ExpType() == syntree.INTEGER_TYPE {
 				log.ErrorLog.Printf(">>>> Error non-void function does not have a return statement [%+v]", node.Pos())
 			}
 		}
-		FoundRet = false
+		FoundReturn = false
 	}
+}
+
+func PreCheck(node syntree.Node) {
+	log.AnalyzeLog.Printf("precheck %+v", node)
+}
+
+func PostCheck(node syntree.Node) {
+	log.AnalyzeLog.Printf("postcheck %+v", node)
+	CheckMainLastDeclaration(node)
+	CheckArrayIndexSize(node)
+	CheckReturnValue(node)
 }
