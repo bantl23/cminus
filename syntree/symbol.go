@@ -8,4 +8,5 @@ type Symbol interface {
 	IsInt() bool
 	IsDeclaration() bool
 	IsReturn() bool
+	IsParam() bool
 }

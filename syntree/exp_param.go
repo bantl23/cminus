@@ -46,6 +46,10 @@ func (n ExpParamNode) IsDeclaration() bool {
 	return true
 }
 
+func (n ExpParamNode) IsParam() bool {
+	return true
+}
+
 func (n ExpParamNode) String() string {
 	return fmt.Sprintf("param %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

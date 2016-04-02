@@ -115,10 +115,12 @@ func Check(node syntree.Node) {
 	}
 
 	if node.(syntree.Symbol).IsArray() {
-		if node.(syntree.Value).Value() > MaxArrayInt {
-			log.ErrorLog.Printf(">>>> Error array size %d is greater than %d [%+v]", node.(syntree.Value).Value(), MaxArrayInt, node.Pos())
-		} else if node.(syntree.Value).Value() < MinArrayInt {
-			log.ErrorLog.Printf(">>>> Error array size %d is less than %d [%+v]", node.(syntree.Value).Value(), MinArrayInt, node.Pos())
+		if node.(syntree.Symbol).IsParam() == false {
+			if node.(syntree.Value).Value() > MaxArrayInt {
+				log.ErrorLog.Printf(">>>> Error array size %d is greater than %d [%+v]", node.(syntree.Value).Value(), MaxArrayInt, node.Pos())
+			} else if node.(syntree.Value).Value() < MinArrayInt {
+				log.ErrorLog.Printf(">>>> Error array size %d is less than %d [%+v]", node.(syntree.Value).Value(), MinArrayInt, node.Pos())
+			}
 		}
 	}
 

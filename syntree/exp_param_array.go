@@ -40,6 +40,10 @@ func (n ExpParamArrayNode) IsDeclaration() bool {
 	return true
 }
 
+func (n ExpParamArrayNode) IsParam() bool {
+	return true
+}
+
 func (n ExpParamArrayNode) String() string {
 	return fmt.Sprintf("param_array %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

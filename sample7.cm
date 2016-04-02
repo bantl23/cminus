@@ -1,21 +1,45 @@
-void hello(void)
+void funcA(void)
 {
-  int h;
+  int a;
   return 0;
 }
 
-int there(void)
+int funcB(void)
 {
-  int t;
+  int b;
   return;
 }
 
-int buddy(void)
+int funcC(void)
 {
-  int b;
+  int c;
+}
+
+void funcD(int a, int b, int c)
+{
+  return;
+}
+
+void funcE(void)
+{
+  void d;
+}
+
+void funcF(int a[], int b, int c)
+{
 }
 
 void main(void)
 {
-  int x[2147483648];
+  int e[2147483648];
+  int f;
+  int g;
+  int h;
+
+  funcD(e, f, g);
+  funcD(f, g, h);
+  funcD(f, g);
+  funcE(e, f, g);
+  funcE(f, g, h);
+  funcE(e, f);
 }
