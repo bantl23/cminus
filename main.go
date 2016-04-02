@@ -130,7 +130,7 @@ func main() {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
-							symtbl.PrintSymTblLst()
+							symtbl.PrintGlbSymTblLst()
 							fmt.Println("<<<<")
 						}
 						if code == true {
