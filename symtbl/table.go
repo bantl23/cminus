@@ -13,7 +13,7 @@ type Value struct {
 
 type SymTbl map[string]*Value
 
-func (s *SymTbl) PrintTable() {
+func (s *SymTbl) Print() {
 	fmt.Printf("    Variable Name Memory Location Type Args Lines\n")
 	fmt.Printf("    ============= =============== ==== ==== =====\n")
 	for i, e := range *s {

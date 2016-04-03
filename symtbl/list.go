@@ -29,7 +29,7 @@ func PrintTableList(lst *SymTblLst) {
 	if lst != nil {
 		tbl := lst.SymTbl
 		fmt.Printf("    Scope %+v level %+v\n", lst.Name, depth)
-		tbl.PrintTable()
+		tbl.Print()
 		for _, t := range lst.Next {
 			PrintTableList(t)
 		}
