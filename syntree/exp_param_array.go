@@ -36,7 +36,7 @@ func (n ExpParamArrayNode) IsArray() bool {
 	return true
 }
 
-func (n ExpParamArrayNode) IsDeclaration() bool {
+func (n ExpParamArrayNode) IsDecl() bool {
 	return true
 }
 

@@ -11,6 +11,19 @@ type Node interface {
 	AddChild(Node)
 	Pos() Position
 	SetPos(int, int)
+	Name() string
+	Value() int
+	Save() bool
+	AddScope() bool
+	IsFunc() bool
+	IsArray() bool
+	IsInt() bool
+	IsDecl() bool
+	IsReturn() bool
+	IsParam() bool
+	IsCall() bool
+	ExpType() ExpressionType
+	TokType() TokenType
 }
 
 type NodeBase struct {
@@ -43,6 +56,22 @@ func (n *NodeBase) AddChild(child Node) {
 	n.children = append(n.children, child)
 }
 
+func (n NodeBase) ExpType() ExpressionType {
+	return UNK_EXP_TYPE
+}
+
+func (n NodeBase) TokType() TokenType {
+	return UNK_TOKEN_TYPE
+}
+
+func (n NodeBase) Name() string {
+	return ""
+}
+
+func (n NodeBase) Value() int {
+	return 0
+}
+
 func (n NodeBase) Save() bool {
 	return false
 }
@@ -63,7 +92,7 @@ func (n NodeBase) IsInt() bool {
 	return false
 }
 
-func (n NodeBase) IsDeclaration() bool {
+func (n NodeBase) IsDecl() bool {
 	return false
 }
 
@@ -80,18 +109,18 @@ func (n NodeBase) IsCall() bool {
 }
 
 func Print(node Node, indent int) {
-	indent += 2
+	indent += 4
 	for node != nil {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
 		fmt.Printf("%+v\n", node)
 		for _, v := range node.Children() {
-			Print(v, indent+2)
+			Print(v, indent)
 		}
 		node = node.Sibling()
 	}
-	indent -= 2
+	indent -= 4
 }
 
 type Procedure func(class Node)

@@ -29,20 +29,20 @@ func (n ExpParamNode) ExpType() ExpressionType {
 }
 
 func (n ExpParamNode) Save() bool {
-	if n.expType == INTEGER_TYPE {
+	if n.expType == INT_EXP_TYPE {
 		return true
 	}
 	return false
 }
 
 func (n ExpParamNode) IsInt() bool {
-	if n.expType == INTEGER_TYPE {
+	if n.expType == INT_EXP_TYPE {
 		return true
 	}
 	return false
 }
 
-func (n ExpParamNode) IsDeclaration() bool {
+func (n ExpParamNode) IsDecl() bool {
 	return true
 }
 

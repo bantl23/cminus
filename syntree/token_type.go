@@ -65,7 +65,3 @@ var tokenTypes = [...]string{
 func (tokenType TokenType) String() string {
 	return tokenTypes[tokenType]
 }
-
-type TokType interface {
-	TokType() TokenType
-}

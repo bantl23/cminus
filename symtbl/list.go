@@ -43,21 +43,21 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 	inserted := false
 
 	table := (*s).SymTbl
-	variable := node.(syntree.Name).Name()
+	variable := node.Name()
 	line := node.Pos().Row()
-	symType := UNK_SYMBOL_TYPE
+	symType := UNK_SYM_TYPE
 
-	if node.(syntree.Symbol).IsFunc() {
-		symType = FUNCTION_TYPE
-		PrevFunc = node.(syntree.Name).Name()
-	} else if node.(syntree.Symbol).IsArray() {
-		symType = ARRAY_TYPE
-	} else if node.(syntree.Symbol).IsInt() {
-		symType = INTEGER_TYPE
+	if node.IsFunc() {
+		symType = FUNC_SYM_TYPE
+		PrevFunc = node.Name()
+	} else if node.IsArray() {
+		symType = ARR_SYM_TYPE
+	} else if node.IsInt() {
+		symType = INT_SYM_TYPE
 	}
 
 	_, ok := table[variable]
-	if node.(syntree.Symbol).IsDeclaration() {
+	if node.IsDecl() {
 		if ok == true {
 			log.ErrorLog.Printf(">>>> ERROR %+v already declared [%+v]", variable, node.Pos())
 		} else {
@@ -67,7 +67,7 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 			}
 			table[variable].SymType = symType
 			table[variable].MemLoc = glbMemLoc
-			if node.(syntree.Symbol).IsParam() {
+			if node.IsParam() {
 				GlbSymTblLst.SymTbl[PrevFunc].Args = append(GlbSymTblLst.SymTbl[PrevFunc].Args, symType)
 			}
 			glbMemLoc.Inc()
@@ -124,5 +124,5 @@ func (s *SymTblLst) ObtainSymType(variable string) SymbolType {
 			lst = lst.Prev
 		}
 	}
-	return UNK_SYMBOL_TYPE
+	return UNK_SYM_TYPE
 }

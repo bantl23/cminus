@@ -3,10 +3,10 @@ package symtbl
 type SymbolType int
 
 const (
-	FUNCTION_TYPE SymbolType = iota
-	INTEGER_TYPE
-	ARRAY_TYPE
-	UNK_SYMBOL_TYPE
+	FUNC_SYM_TYPE SymbolType = iota
+	INT_SYM_TYPE
+	ARR_SYM_TYPE
+	UNK_SYM_TYPE
 )
 
 var symTypes = [...]string{

@@ -14,7 +14,7 @@ func NewStmtFunctionOutputNode() Node {
 	n := new(StmtFunctionNode)
 	n.position = Position{-1, -1}
 	n.name = "output"
-	n.expType = VOID_TYPE
+	n.expType = VOID_EXP_TYPE
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -36,7 +36,7 @@ func (n StmtFunctionOutputNode) IsFunc() bool {
 	return true
 }
 
-func (n StmtFunctionOutputNode) IsDeclaration() bool {
+func (n StmtFunctionOutputNode) IsDecl() bool {
 	return true
 }
 

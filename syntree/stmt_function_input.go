@@ -14,7 +14,7 @@ func NewStmtFunctionInputNode() Node {
 	n := new(StmtFunctionInputNode)
 	n.position = Position{-1, -1}
 	n.name = "input"
-	n.expType = INTEGER_TYPE
+	n.expType = INT_EXP_TYPE
 	n.sibling = nil
 	n.children = nil
 	return n
@@ -36,7 +36,7 @@ func (n StmtFunctionInputNode) IsFunc() bool {
 	return true
 }
 
-func (n StmtFunctionInputNode) IsDeclaration() bool {
+func (n StmtFunctionInputNode) IsDecl() bool {
 	return true
 }
 

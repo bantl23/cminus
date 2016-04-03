@@ -40,7 +40,7 @@ func (n StmtFunctionNode) IsFunc() bool {
 	return true
 }
 
-func (n StmtFunctionNode) IsDeclaration() bool {
+func (n StmtFunctionNode) IsDecl() bool {
 	return true
 }
 

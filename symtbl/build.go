@@ -21,7 +21,7 @@ func NewGlbSymTblLst() {
 	output := syntree.NewStmtFunctionOutputNode()
 	GlbSymTblLst.Insert(input)
 	GlbSymTblLst.Insert(output)
-	GlbSymTblLst.SymTbl[output.(syntree.Name).Name()].Args = append(GlbSymTblLst.SymTbl[output.(syntree.Name).Name()].Args, INTEGER_TYPE)
+	GlbSymTblLst.SymTbl[output.Name()].Args = append(GlbSymTblLst.SymTbl[output.Name()].Args, INT_SYM_TYPE)
 	CurSymTblLst = GlbSymTblLst
 }
 
@@ -34,7 +34,7 @@ func Build(node syntree.Node) {
 }
 
 func Pushin(node syntree.Node) {
-	if node.(syntree.Symbol).Save() == true {
+	if node.Save() == true {
 		ok := CurSymTblLst.Insert(node)
 		if ok == true {
 			log.AnalyzeLog.Printf("inserted %+v into %+v", node, CurSymTblLst.Name)
@@ -42,12 +42,12 @@ func Pushin(node syntree.Node) {
 	} else {
 		log.AnalyzeLog.Printf("received %+v", node)
 	}
-	if node.(syntree.Symbol).AddScope() == true {
+	if node.AddScope() == true {
 		name := CurSymTblLst.Name
 		n := NewSymTblLst(CurSymTblLst)
 		CurSymTblLst = n
-		if _, ok := node.(syntree.Name); ok {
-			CurSymTblLst.Name = name + TblSep + node.(syntree.Name).Name()
+		if node.Name() != "" {
+			CurSymTblLst.Name = name + TblSep + node.Name()
 		} else {
 			CurSymTblLst.Name = name + InnerName
 		}
@@ -56,7 +56,7 @@ func Pushin(node syntree.Node) {
 }
 
 func Popout(node syntree.Node) {
-	if node.(syntree.Symbol).AddScope() == true {
+	if node.AddScope() == true {
 		log.AnalyzeLog.Printf("returned %+v", CurSymTblLst.Name)
 		CurSymTblLst = CurSymTblLst.Prev
 	}

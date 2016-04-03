@@ -3,21 +3,17 @@ package syntree
 type ExpressionType int
 
 const (
-	VOID_TYPE ExpressionType = iota
-	INTEGER_TYPE
-	UNK_EXPRESSION_TYPE
+	VOID_EXP_TYPE ExpressionType = iota
+	INT_EXP_TYPE
+	UNK_EXP_TYPE
 )
 
 var expressionTypes = [...]string{
-	"VoidExpType",
-	"IntExpType",
-	"UnknownExpType",
+	"VoidExp",
+	"IntExp",
+	"UnknownExp",
 }
 
 func (expressionType ExpressionType) String() string {
 	return expressionTypes[expressionType]
-}
-
-type ExpType interface {
-	ExpType() ExpressionType
 }

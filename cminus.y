@@ -85,11 +85,11 @@ var_declaration     : type_specifier ID SEMI        {
                     ;
 
 type_specifier      : INT                           {
-                                                      $$ = syntree.INTEGER_TYPE
+                                                      $$ = syntree.INT_EXP_TYPE
                                                       log.ParseLog.Printf("type_specifier0: %+v\n", $$)
                                                     }
                     | VOID                          {
-                                                      $$ = syntree.VOID_TYPE
+                                                      $$ = syntree.VOID_EXP_TYPE
                                                       log.ParseLog.Printf("type_specifier1: %+v\n", $$)
                                                     }
                     ;
@@ -112,7 +112,7 @@ params              : param_list                    {
                                                       log.ParseLog.Printf("params0: %+v\n", $$)
 																										}
                     | VOID                          {
-                                                      $$ = syntree.NewExpParamNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), syntree.VOID_TYPE, "")
+                                                      $$ = syntree.NewExpParamNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), syntree.VOID_EXP_TYPE, "")
                                                       log.ParseLog.Printf("params1: %+v\n", $$)
 																										}
                     ;

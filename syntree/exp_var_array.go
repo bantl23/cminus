@@ -42,7 +42,7 @@ func (n ExpVarArrayNode) IsArray() bool {
 	return true
 }
 
-func (n ExpVarArrayNode) IsDeclaration() bool {
+func (n ExpVarArrayNode) IsDecl() bool {
 	return true
 }
 
