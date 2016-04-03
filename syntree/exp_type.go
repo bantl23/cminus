@@ -9,9 +9,9 @@ const (
 )
 
 var expressionTypes = [...]string{
-	"VoidExp",
-	"IntExp",
-	"UnknownExp",
+	"void",
+	"int",
+	"unkExp",
 }
 
 func (expressionType ExpressionType) String() string {
