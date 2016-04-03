@@ -7,16 +7,17 @@ import (
 type Value struct {
 	MemLoc  MemLoc
 	SymType SymbolType
+	Args    []SymbolType
 	Lines   []int
 }
 
 type SymTbl map[string]*Value
 
 func (s *SymTbl) PrintTable() {
-	fmt.Printf("    Variable Name Type Memory Location Lines\n")
-	fmt.Printf("    ============= ==== =============== =====\n")
+	fmt.Printf("    Variable Name Memory Location Type Args Lines\n")
+	fmt.Printf("    ============= =============== ==== ==== =====\n")
 	for i, e := range *s {
-		fmt.Printf("    %13s %4s 0x%013x %+v\n", i, e.SymType, e.MemLoc, e.Lines)
+		fmt.Printf("    %13s 0x%013x %4s %+v %+v\n", i, e.MemLoc, e.SymType, e.Args, e.Lines)
 	}
 	fmt.Printf("\n")
 }

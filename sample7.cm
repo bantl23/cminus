@@ -39,7 +39,8 @@ void main(void)
   funcD(e, f, g);
   funcD(f, g, h);
   funcD(f, g);
-  funcE(e, f, g);
-  funcE(f, g, h);
-  funcE(e, f);
+  funcE(f, g);
+  funcF(e, f, g);
+  funcF(f, g, h);
+  funcF(e, f);
 }

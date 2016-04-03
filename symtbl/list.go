@@ -37,6 +37,8 @@ func PrintTableList(lst *SymTblLst) {
 	depth--
 }
 
+var PrevFunc = ""
+
 func (s *SymTblLst) Insert(node syntree.Node) bool {
 	inserted := false
 
@@ -47,6 +49,7 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 
 	if node.(syntree.Symbol).IsFunc() {
 		symType = FUNCTION_TYPE
+		PrevFunc = node.(syntree.Name).Name()
 	} else if node.(syntree.Symbol).IsArray() {
 		symType = ARRAY_TYPE
 	} else if node.(syntree.Symbol).IsInt() {
@@ -64,6 +67,9 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 			}
 			table[variable].SymType = symType
 			table[variable].MemLoc = glbMemLoc
+			if node.(syntree.Symbol).IsParam() {
+				GlbSymTblLst.SymTbl[PrevFunc].Args = append(GlbSymTblLst.SymTbl[PrevFunc].Args, symType)
+			}
 			glbMemLoc.Inc()
 			inserted = true
 		}
@@ -93,11 +99,30 @@ func (s *SymTblLst) Insert(node syntree.Node) bool {
 	return inserted
 }
 
-func (s *SymTblLst) Obtain(scope string, variable string) MemLoc {
-	table := (*s).SymTbl
-	_, ok := table[variable]
-	if ok == true {
-		return table[variable].MemLoc
+func (s *SymTblLst) ObtainMemLog(variable string) MemLoc {
+	lst := s
+	for lst != nil {
+		table := lst.SymTbl
+		_, ok := table[variable]
+		if ok == true {
+			return table[variable].MemLoc
+		} else {
+			lst = lst.Prev
+		}
 	}
 	return -1
+}
+
+func (s *SymTblLst) ObtainSymType(variable string) SymbolType {
+	lst := s
+	for lst != nil {
+		table := lst.SymTbl
+		_, ok := table[variable]
+		if ok == true {
+			return table[variable].SymType
+		} else {
+			lst = lst.Prev
+		}
+	}
+	return UNK_SYMBOL_TYPE
 }

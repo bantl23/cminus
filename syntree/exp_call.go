@@ -26,12 +26,8 @@ func (n ExpCallNode) Save() bool {
 	return true
 }
 
-func (n ExpCallNode) IsFunc() bool {
-	return false
-}
-
-func (n ExpCallNode) IsDeclaration() bool {
-	return false
+func (n ExpCallNode) IsCall() bool {
+	return true
 }
 
 func (n ExpCallNode) String() string {

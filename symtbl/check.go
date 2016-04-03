@@ -6,6 +6,7 @@ import (
 )
 
 func Analyze(node syntree.Node) {
+	CurSymTblLst = GlbSymTblLst
 	syntree.Traverse(node, PreCheck, PostCheck)
 }
 
@@ -64,8 +65,51 @@ func CheckReturnValue(node syntree.Node) {
 	}
 }
 
+var ArgLst []SymbolType = nil
+
+func CheckFuncArgsPre(node syntree.Node) {
+	if node.(syntree.Symbol).IsCall() {
+		ArgLst = nil
+	}
+}
+
+func CheckFuncArgsPost(node syntree.Node) {
+	if CurSymTblLst.ObtainSymType(node.(syntree.Name).Name()) == ARRAY_TYPE {
+		ArgLst = append(ArgLst, ARRAY_TYPE)
+	} else if CurSymTblLst.ObtainSymType(node.(syntree.Name).Name()) == INTEGER_TYPE {
+		ArgLst = append(ArgLst, INTEGER_TYPE)
+	}
+	if node.(syntree.Symbol).IsCall() {
+		glbArgs := GlbSymTblLst.SymTbl[node.(syntree.Name).Name()].Args
+		if ArgLst == nil && glbArgs != nil {
+			log.ErrorLog.Printf(">>>> Error calling %s with no arguments %d required [%+v]", node.(syntree.Name).Name(), len(glbArgs), node.Pos())
+		} else if ArgLst != nil && glbArgs == nil {
+			log.ErrorLog.Printf(">>>> Error calling %s with arguments but takes no arguments [%+v]", node.(syntree.Name).Name(), node.Pos())
+		} else if len(ArgLst) != len(glbArgs) {
+			log.ErrorLog.Printf(">>>> Error calling %s with %d arguments but takes %d arguments [%+v]", node.(syntree.Name).Name(), len(ArgLst), len(glbArgs), node.Pos())
+		} else {
+			for i := range ArgLst {
+				if ArgLst[i] != glbArgs[i] {
+					log.ErrorLog.Printf(">>>> Error calling %s argument %d receiving %s but expects %s [%+v]", node.(syntree.Name).Name(), i+1, ArgLst[i], glbArgs[i], node.Pos())
+				}
+			}
+		}
+	}
+}
+
+var Count int = 0
+
 func PreCheck(node syntree.Node) {
 	log.AnalyzeLog.Printf("precheck %+v", node)
+	if node.(syntree.Symbol).AddScope() {
+		if len(CurSymTblLst.Next) > 1 {
+			CurSymTblLst = CurSymTblLst.Next[Count]
+			Count++
+		} else {
+			CurSymTblLst = CurSymTblLst.Next[0]
+		}
+	}
+	CheckFuncArgsPre(node)
 }
 
 func PostCheck(node syntree.Node) {
@@ -73,4 +117,8 @@ func PostCheck(node syntree.Node) {
 	CheckMainLastDeclaration(node)
 	CheckArrayIndexSize(node)
 	CheckReturnValue(node)
+	CheckFuncArgsPost(node)
+	if node.(syntree.Symbol).AddScope() {
+		CurSymTblLst = CurSymTblLst.Prev
+	}
 }

@@ -9,4 +9,5 @@ type Symbol interface {
 	IsDeclaration() bool
 	IsReturn() bool
 	IsParam() bool
+	IsCall() bool
 }
