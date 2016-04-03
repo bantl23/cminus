@@ -13,6 +13,11 @@ type SymTblVal struct {
 
 type SymTbl map[string]*SymTblVal
 
+func NewSymTbl() *SymTbl {
+	s := make(SymTbl)
+	return &s
+}
+
 func (s SymTblVal) MemLoc() MemLoc {
 	return s.memLoc
 }
@@ -38,7 +43,7 @@ func (s *SymTblVal) AddLine(line int) {
 }
 
 func PrintTable(s *SymTbl, indent int) {
-	for s != nil {
+	if s != nil {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
@@ -51,16 +56,38 @@ func PrintTable(s *SymTbl, indent int) {
 			for i := 0; i < indent; i++ {
 				fmt.Print(" ")
 			}
-			fmt.Printf("%13s 0x%013x %4s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.Args(), v.Lines())
+			if v != nil {
+				fmt.Printf("%13s 0x%013x %4s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.Args(), v.Lines())
+			} else {
+				fmt.Printf("%13s\n", k)
+			}
 		}
 	}
 }
+
+var SCOPE_SEPARATOR string = "$"
+var ROOT_SCOPE string = "global"
+var INNER_SCOPE string = "inner"
 
 type SymTblLst struct {
 	scope    string
 	symTbl   SymTbl
 	parent   *SymTblLst
+	sibling  *SymTblLst
 	children []*SymTblLst
+}
+
+func NewSymTblLst(scope string, child *SymTblLst) *SymTblLst {
+	s := new(SymTblLst)
+	s.scope = SCOPE_SEPARATOR + scope
+	s.symTbl = *NewSymTbl()
+	s.parent = nil
+	s.sibling = nil
+	if child != nil {
+		s.children = append(s.children, child)
+		child.parent = s
+	}
+	return s
 }
 
 func (s SymTblLst) Scope() string {
@@ -79,6 +106,14 @@ func (s *SymTblLst) SetParent(p *SymTblLst) {
 	s.parent = p
 }
 
+func (s SymTblLst) Sibling() *SymTblLst {
+	return s.sibling
+}
+
+func (s *SymTblLst) SetSibling(p *SymTblLst) {
+	s.sibling = p
+}
+
 func (s SymTblLst) Children() []*SymTblLst {
 	return s.children
 }
@@ -93,12 +128,13 @@ func PrintTableList(s *SymTblLst, indent int) {
 		for i := 0; i < indent; i++ {
 			fmt.Printf(" ")
 		}
-		fmt.Printf("Scope %s\n", s.scope)
+		fmt.Printf("scope %s\n", s.scope)
 		t := s.SymTbl()
 		PrintTable(&t, indent)
 		for _, v := range s.Children() {
 			PrintTableList(v, indent)
 		}
+		s = s.Sibling()
 	}
 	indent -= 4
 }

@@ -1,4 +1,4 @@
-int xyz(void)
+int xyz(int x, int y)
 {
   return 1;
 }
