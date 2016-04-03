@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/bantl23/cminus/log"
-	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
@@ -117,24 +116,22 @@ func main() {
 						log.InfoLog.Printf("parse tree")
 						log.InfoLog.Printf("==========")
 						fmt.Println(">>>>")
-						syntree.Print(root, 0)
+						syntree.PrintNode(root, 0)
 						fmt.Println("<<<<")
 					}
 					if analyze == true {
-						log.InfoLog.Printf("analyzing\n")
-						log.InfoLog.Printf("=========\n")
-						symtbl.NewGlbSymTblLst()
-						symtbl.Build(root)
+						log.InfoLog.Printf("building symbol table\n")
+						log.InfoLog.Printf("=====================\n")
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
-							symtbl.PrintGlbSymTblLst()
 							fmt.Println("<<<<")
 						}
-						symtbl.Analyze(root)
+						log.InfoLog.Printf("analyzing\n")
+						log.InfoLog.Printf("=========\n")
 						if code == true {
-							log.InfoLog.Printf("code generation\n")
+							log.InfoLog.Printf("generating code\n")
 							log.InfoLog.Printf("===============\n")
 							log.InfoLog.Printf("creating %s\n", ofilename)
 						}

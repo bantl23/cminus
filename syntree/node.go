@@ -108,7 +108,7 @@ func (n NodeBase) IsCall() bool {
 	return false
 }
 
-func Print(node Node, indent int) {
+func PrintNode(node Node, indent int) {
 	indent += 4
 	for node != nil {
 		for i := 0; i < indent; i++ {
@@ -116,7 +116,7 @@ func Print(node Node, indent int) {
 		}
 		fmt.Printf("%+v\n", node)
 		for _, v := range node.Children() {
-			Print(v, indent)
+			PrintNode(v, indent)
 		}
 		node = node.Sibling()
 	}
@@ -125,14 +125,14 @@ func Print(node Node, indent int) {
 
 type Procedure func(class Node)
 
-func Traverse(node Node, pre Procedure, post Procedure) {
+func TraverseNode(node Node, pre Procedure, post Procedure) {
 	if node != nil {
 		pre(node)
 		for _, n := range node.Children() {
-			Traverse(n, pre, post)
+			TraverseNode(n, pre, post)
 		}
 		post(node)
-		Traverse(node.Sibling(), pre, post)
+		TraverseNode(node.Sibling(), pre, post)
 	}
 }
 
