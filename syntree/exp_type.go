@@ -11,7 +11,7 @@ const (
 var expressionTypes = [...]string{
 	"void",
 	"int",
-	"unkExp",
+	"exp?",
 }
 
 func (expressionType ExpressionType) String() string {

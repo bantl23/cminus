@@ -59,7 +59,7 @@ var tokenTypes = [...]string{
 	"]",
 	"{",
 	"}",
-	"unkTok",
+	"tok?",
 }
 
 func (tokenType TokenType) String() string {

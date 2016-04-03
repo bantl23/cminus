@@ -13,7 +13,7 @@ var symTypes = [...]string{
 	"fun",
 	"int",
 	"arr",
-	"unkSym",
+	"sym?",
 }
 
 func (symType SymbolType) String() string {

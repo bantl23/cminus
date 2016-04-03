@@ -13,5 +13,3 @@ func (m *MemLoc) Reset() {
 func (m MemLoc) Get() int {
 	return int(m)
 }
-
-var glbMemLoc MemLoc = 0

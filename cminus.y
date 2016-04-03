@@ -67,15 +67,14 @@ declaration_list    : declaration_list declaration  {
 
 declaration         : var_declaration               {
                                                       $$ = $1
-                                                      rootTblLst.SymTbl()[$1.Name()] = nil
+                                                      InsertVarParamInSymTbl(rootTblLst, $1)
                                                       curTblLst = nil
                                                       log.ParseLog.Printf("declaration0: %+v\n", $$)
                                                     }
                     | fun_declaration               {
                                                       $$ = $1
-                                                      log.ParseLog.Printf("declaration1: adding symbol table %s", curTblLst.Scope())
                                                       rootTblLst.AddChildren(curTblLst)
-                                                      rootTblLst.SymTbl()[$1.Name()] = nil
+                                                      InsertFuncInSymTbl(rootTblLst, $1)
                                                       curTblLst = nil
                                                       log.ParseLog.Printf("declaration1: %+v\n", $$)
                                                     }
@@ -116,7 +115,7 @@ fun_declaration     : type_specifier ID
                                                       t := $<node>5
                                                       if t.ExpType() != syntree.VOID_EXP_TYPE {
                                                         for t != nil {
-                                                          curTblLst.SymTbl()[t.Name()] = nil
+                                                          InsertVarParamInSymTbl(curTblLst, t)
                                                           log.ParseLog.Printf("fun_declaration0: inserting %+v into %s", t, $<str>2)
                                                           t = t.Sibling()
                                                         }
@@ -173,7 +172,7 @@ compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                       curTblLst = symtbl.NewSymTblLst(symtbl.INNER_SCOPE, curTblLst)
                                                       t := $2
                                                       for t != nil {
-                                                        curTblLst.SymTbl()[t.Name()] = nil
+                                                        InsertVarParamInSymTbl(curTblLst, t)
                                                         log.ParseLog.Printf("compound_stmt0: inserting %+v into %s", t, symtbl.INNER_SCOPE)
                                                         t = t.Sibling()
                                                       }
