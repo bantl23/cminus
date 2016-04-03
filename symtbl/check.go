@@ -6,7 +6,6 @@ import (
 )
 
 func Analyze(node syntree.Node) {
-	CurSymTblLst = GlbSymTblLst
 	syntree.Traverse(node, PreCheck, PostCheck)
 }
 

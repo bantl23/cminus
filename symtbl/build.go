@@ -30,7 +30,6 @@ func PrintGlbSymTblLst() {
 }
 
 func Build(node syntree.Node) {
-	CurSymTblLst = GlbSymTblLst
 	syntree.Traverse(node, Pushin, Popout)
 }
 
