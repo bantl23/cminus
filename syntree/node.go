@@ -11,7 +11,6 @@ type Node interface {
 	AddChild(Node)
 	Pos() Position
 	SetPos(int, int)
-	Name() string
 }
 
 type NodeBase struct {
@@ -42,10 +41,6 @@ func (n NodeBase) Children() []Node {
 
 func (n *NodeBase) AddChild(child Node) {
 	n.children = append(n.children, child)
-}
-
-func (n NodeBase) Name() string {
-	return ""
 }
 
 func (n NodeBase) Save() bool {

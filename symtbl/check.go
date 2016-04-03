@@ -86,18 +86,8 @@ func CheckFuncArgs(node syntree.Node) {
 	}
 }
 
-var GlbNextCnt int = 0
-
 func PreCheck(node syntree.Node) {
 	log.AnalyzeLog.Printf("precheck %+v", node)
-	if node.(syntree.Symbol).AddScope() {
-		if len(CurSymTblLst.Next) > 1 {
-			CurSymTblLst = CurSymTblLst.Next[GlbNextCnt]
-			GlbNextCnt++
-		} else {
-			CurSymTblLst = CurSymTblLst.Next[0]
-		}
-	}
 }
 
 func PostCheck(node syntree.Node) {
@@ -106,7 +96,4 @@ func PostCheck(node syntree.Node) {
 	CheckArrayIndexSize(node)
 	CheckReturnValue(node)
 	CheckFuncArgs(node)
-	if node.(syntree.Symbol).AddScope() {
-		CurSymTblLst = CurSymTblLst.Prev
-	}
 }

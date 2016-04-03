@@ -21,7 +21,7 @@ func NewGlbSymTblLst() {
 	output := syntree.NewStmtFunctionOutputNode()
 	GlbSymTblLst.Insert(input)
 	GlbSymTblLst.Insert(output)
-	GlbSymTblLst.SymTbl[output.Name()].Args = append(GlbSymTblLst.SymTbl[output.Name()].Args, INTEGER_TYPE)
+	GlbSymTblLst.SymTbl[output.(syntree.Name).Name()].Args = append(GlbSymTblLst.SymTbl[output.(syntree.Name).Name()].Args, INTEGER_TYPE)
 	CurSymTblLst = GlbSymTblLst
 }
 
