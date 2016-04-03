@@ -125,7 +125,6 @@ func main() {
 						log.InfoLog.Printf("=========\n")
 						symtbl.NewGlbSymTblLst()
 						symtbl.Build(root)
-						symtbl.Analyze(root)
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
@@ -133,6 +132,7 @@ func main() {
 							symtbl.PrintGlbSymTblLst()
 							fmt.Println("<<<<")
 						}
+						symtbl.Analyze(root)
 						if code == true {
 							log.InfoLog.Printf("code generation\n")
 							log.InfoLog.Printf("===============\n")
