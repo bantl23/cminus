@@ -132,6 +132,7 @@ func main() {
 						}
 						log.InfoLog.Printf("analyzing\n")
 						log.InfoLog.Printf("=========\n")
+						Analyze(rootNode)
 						if code == true {
 							log.InfoLog.Printf("generating code\n")
 							log.InfoLog.Printf("===============\n")
