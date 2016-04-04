@@ -109,21 +109,14 @@ func CheckFuncTypes(node syntree.Node) {
 }
 
 func precheck(node syntree.Node) {
-	log.AnalyzeLog.Printf("precheck %+v %+v", curSymTblLst.Scope(), node)
-	if node.IsFunc() || node.IsCompound() {
-		curSymTblLst = curSymTblLst.Children()[0]
-	}
+	log.AnalyzeLog.Printf("precheck %+v", node)
 }
 
 func postcheck(node syntree.Node) {
-	log.AnalyzeLog.Printf("postcheck %+v %+v", curSymTblLst.Scope(), node)
+	log.AnalyzeLog.Printf("postcheck %+v", node)
 
 	CheckMainLastDeclare(node)
 	CheckArrayIndexSize(node)
 	CheckReturnValue(node)
 	CheckFuncTypes(node)
-
-	if node.IsFunc() || node.IsCompound() {
-		curSymTblLst = curSymTblLst.Parent()
-	}
 }
