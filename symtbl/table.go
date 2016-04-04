@@ -87,14 +87,18 @@ type SymTblLst struct {
 	children []*SymTblLst
 }
 
-func NewSymTblLst(scope string, child *SymTblLst) *SymTblLst {
+func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
 	s := new(SymTblLst)
+	if scope == "" {
+		scope = INNER_SCOPE
+	}
 	s.scope = SCOPE_SEPARATOR + scope
 	s.symTbl = *NewSymTbl()
-	s.parent = nil
-	if child != nil {
-		s.children = append(s.children, child)
-		child.parent = s
+	s.parent = parent
+	s.children = nil
+	if parent != nil {
+		parent.AddChildren(s)
+		s.scope = parent.Scope() + SCOPE_SEPARATOR + scope
 	}
 	return s
 }

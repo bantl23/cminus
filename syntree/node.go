@@ -13,15 +13,16 @@ type Node interface {
 	SetPos(int, int)
 	Name() string
 	Value() int
-	Save() bool
-	AddScope() bool
 	IsFunc() bool
+	IsCompound() bool
 	IsArray() bool
 	IsInt() bool
 	IsDecl() bool
 	IsReturn() bool
+	IsId() bool
 	IsParam() bool
 	IsCall() bool
+	IsVar() bool
 	ExpType() ExpressionType
 	TokType() TokenType
 }
@@ -72,15 +73,11 @@ func (n NodeBase) Value() int {
 	return 0
 }
 
-func (n NodeBase) Save() bool {
-	return false
-}
-
-func (n NodeBase) AddScope() bool {
-	return false
-}
-
 func (n NodeBase) IsFunc() bool {
+	return false
+}
+
+func (n NodeBase) IsCompound() bool {
 	return false
 }
 
@@ -100,11 +97,19 @@ func (n NodeBase) IsReturn() bool {
 	return false
 }
 
+func (n NodeBase) IsId() bool {
+	return false
+}
+
 func (n NodeBase) IsParam() bool {
 	return false
 }
 
 func (n NodeBase) IsCall() bool {
+	return false
+}
+
+func (n NodeBase) IsVar() bool {
 	return false
 }
 

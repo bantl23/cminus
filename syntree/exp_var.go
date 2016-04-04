@@ -28,13 +28,6 @@ func (n ExpVarNode) ExpType() ExpressionType {
 	return n.expType
 }
 
-func (n ExpVarNode) Save() bool {
-	if n.expType == INT_EXP_TYPE {
-		return true
-	}
-	return false
-}
-
 func (n ExpVarNode) IsInt() bool {
 	if n.expType == INT_EXP_TYPE {
 		return true
@@ -43,6 +36,10 @@ func (n ExpVarNode) IsInt() bool {
 }
 
 func (n ExpVarNode) IsDecl() bool {
+	return true
+}
+
+func (n ExpVarNode) IsVar() bool {
 	return true
 }
 

@@ -22,7 +22,7 @@ func (n ExpIdNode) Name() string {
 	return n.name
 }
 
-func (n ExpIdNode) Save() bool {
+func (n ExpIdNode) IsId() bool {
 	return true
 }
 

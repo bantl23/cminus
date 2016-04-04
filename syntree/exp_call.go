@@ -22,10 +22,6 @@ func (n ExpCallNode) Name() string {
 	return n.name
 }
 
-func (n ExpCallNode) Save() bool {
-	return true
-}
-
 func (n ExpCallNode) IsCall() bool {
 	return true
 }

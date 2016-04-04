@@ -32,10 +32,6 @@ func (n StmtFunctionNode) Save() bool {
 	return true
 }
 
-func (n StmtFunctionNode) AddScope() bool {
-	return true
-}
-
 func (n StmtFunctionNode) IsFunc() bool {
 	return true
 }

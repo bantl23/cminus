@@ -16,7 +16,7 @@ func NewStmtCompoundNode(row int, col int) Node {
 	return n
 }
 
-func (n StmtCompoundNode) AddScope() bool {
+func (n StmtCompoundNode) IsCompound() bool {
 	return true
 }
 

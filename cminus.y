@@ -3,15 +3,12 @@ package main
 
 import (
  "github.com/bantl23/cminus/log"
- "github.com/bantl23/cminus/symtbl"
  "github.com/bantl23/cminus/syntree"
  "strconv"
 )
 
 var rootNode syntree.Node
 var savedPos *syntree.Position
-var rootTblLst *symtbl.SymTblLst = symtbl.NewSymTblLst(symtbl.ROOT_SCOPE, nil)
-var curTblLst *symtbl.SymTblLst = nil
 %}
 
 %union {
@@ -67,15 +64,10 @@ declaration_list    : declaration_list declaration  {
 
 declaration         : var_declaration               {
                                                       $$ = $1
-                                                      InsertVarParamInSymTbl(rootTblLst, $1)
-                                                      curTblLst = nil
                                                       log.ParseLog.Printf("declaration0: %+v\n", $$)
                                                     }
                     | fun_declaration               {
                                                       $$ = $1
-                                                      rootTblLst.AddChildren(curTblLst)
-                                                      InsertFuncInSymTbl(rootTblLst, $1)
-                                                      curTblLst = nil
                                                       log.ParseLog.Printf("declaration1: %+v\n", $$)
                                                     }
                     ;
@@ -111,15 +103,6 @@ fun_declaration     : type_specifier ID
                                                       $$ = syntree.NewStmtFunctionNode(savedPos.Row(), savedPos.Col(), $<exp>1, $<str>2)
                                                       $$.AddChild($<node>5)
                                                       $$.AddChild($<node>7)
-                                                      curTblLst = symtbl.NewSymTblLst($<str>2, curTblLst)
-                                                      t := $<node>5
-                                                      if t.ExpType() != syntree.VOID_EXP_TYPE {
-                                                        for t != nil {
-                                                          InsertVarParamInSymTbl(curTblLst, t)
-                                                          log.ParseLog.Printf("fun_declaration0: inserting %+v into %s", t, $<str>2)
-                                                          t = t.Sibling()
-                                                        }
-                                                      }
                                                       log.ParseLog.Printf("fun_declaration0: %+v\n", $$)
                                                     }
                     ;
@@ -169,13 +152,6 @@ compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                       $$ = syntree.NewStmtCompoundNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($2)
                                                       $$.AddChild($3)
-                                                      curTblLst = symtbl.NewSymTblLst(symtbl.INNER_SCOPE, curTblLst)
-                                                      t := $2
-                                                      for t != nil {
-                                                        InsertVarParamInSymTbl(curTblLst, t)
-                                                        log.ParseLog.Printf("compound_stmt0: inserting %+v into %s", t, symtbl.INNER_SCOPE)
-                                                        t = t.Sibling()
-                                                      }
                                                       log.ParseLog.Printf("compound_stmt0: %+v\n", $$)
 																										}
                     ;

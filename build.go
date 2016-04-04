@@ -6,44 +6,49 @@ import (
 	"github.com/bantl23/cminus/syntree"
 )
 
-var glbMemLoc symtbl.MemLoc
+var GlbSymTblLst *symtbl.SymTblLst
+var curSymTblLst *symtbl.SymTblLst
 
-func InsertVarParamInSymTbl(table *symtbl.SymTblLst, node syntree.Node) {
-	log.AnalyzeLog.Printf("insert var/param: %+v %+v", table, node)
-	if value, ok := table.SymTbl()[node.Name()]; ok {
-		value.AddLine(node.Pos().Row())
-	} else {
-		t := symtbl.UNK_SYM_TYPE
-		if node.IsArray() {
-			t = symtbl.ARR_SYM_TYPE
-		} else if node.IsInt() {
-			t = symtbl.INT_SYM_TYPE
-		}
-		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, t, node.Pos().Row())
-		glbMemLoc.Inc()
+func PrintTableList() {
+	symtbl.PrintTableList(GlbSymTblLst, 0)
+}
+
+func NewGlbSymTblLst() {
+	GlbSymTblLst = symtbl.NewSymTblLst(symtbl.ROOT_SCOPE, nil)
+	curSymTblLst = GlbSymTblLst
+	input := syntree.NewStmtFunctionInputNode()
+	output := syntree.NewStmtFunctionOutputNode()
+	InsertFuncInSymTbl(curSymTblLst, input)
+	InsertFuncInSymTbl(curSymTblLst, output)
+	GlbSymTblLst.SymTbl()[output.Name()].AddArg(symtbl.INT_SYM_TYPE)
+}
+
+func BuildTableList(node syntree.Node) {
+	NewGlbSymTblLst()
+	syntree.TraverseNode(node, prebuild, postbuild)
+}
+
+func prebuild(node syntree.Node) {
+	log.AnalyzeLog.Printf("prebuild %+v", node)
+	if node.IsFunc() {
+		InsertFuncInSymTbl(curSymTblLst, node)
+	} else if node.IsCall() {
+		InsertCallIdInSymTbl(curSymTblLst, node)
+	} else if node.IsId() {
+		InsertCallIdInSymTbl(curSymTblLst, node)
+	} else if node.IsVar() && node.IsInt() {
+		InsertVarParamInSymTbl(curSymTblLst, node)
+	} else if node.IsParam() && node.IsInt() {
+		InsertVarParamInSymTbl(curSymTblLst, node)
+	}
+	if node.IsFunc() || node.IsCompound() {
+		curSymTblLst = symtbl.NewSymTblLst(node.Name(), curSymTblLst)
 	}
 }
 
-func InsertFuncInSymTbl(table *symtbl.SymTblLst, node syntree.Node) {
-	log.AnalyzeLog.Printf("insert func: %+v %+v", table, node)
-	if value, ok := table.SymTbl()[node.Name()]; ok {
-		value.AddLine(node.Pos().Row())
-	} else {
-		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, symtbl.FUNC_SYM_TYPE, node.Pos().Row())
-		glbMemLoc.Inc()
-
-		if len(node.Children()) > 0 {
-			n := node.Children()[0]
-			for n != nil {
-				if n.ExpType() != syntree.VOID_EXP_TYPE {
-					if n.IsArray() {
-						table.SymTbl()[node.Name()].AddArg(symtbl.ARR_SYM_TYPE)
-					} else if n.IsInt() {
-						table.SymTbl()[node.Name()].AddArg(symtbl.INT_SYM_TYPE)
-					}
-				}
-				n = n.Sibling()
-			}
-		}
+func postbuild(node syntree.Node) {
+	log.AnalyzeLog.Printf("postbuild %+v", node)
+	if node.IsFunc() || node.IsCompound() {
+		curSymTblLst = curSymTblLst.Parent()
 	}
 }

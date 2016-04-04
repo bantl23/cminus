@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/bantl23/cminus/log"
-	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
@@ -123,11 +122,12 @@ func main() {
 					if analyze == true {
 						log.InfoLog.Printf("building symbol table\n")
 						log.InfoLog.Printf("=====================\n")
+						BuildTableList(rootNode)
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
-							symtbl.PrintTableList(rootTblLst, 0)
+							PrintTableList()
 							fmt.Println("<<<<")
 						}
 						log.InfoLog.Printf("analyzing\n")

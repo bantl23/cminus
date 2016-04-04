@@ -34,15 +34,22 @@ func (n ExpVarArrayNode) ExpType() ExpressionType {
 	return n.expType
 }
 
-func (n ExpVarArrayNode) Save() bool {
-	return true
-}
-
 func (n ExpVarArrayNode) IsArray() bool {
 	return true
 }
 
+func (n ExpVarArrayNode) IsInt() bool {
+	if n.expType == INT_EXP_TYPE {
+		return true
+	}
+	return false
+}
+
 func (n ExpVarArrayNode) IsDecl() bool {
+	return true
+}
+
+func (n ExpVarArrayNode) IsVar() bool {
 	return true
 }
 
