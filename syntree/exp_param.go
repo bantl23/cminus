@@ -36,10 +36,6 @@ func (n ExpParamNode) IsInt() bool {
 	return false
 }
 
-func (n ExpParamNode) IsDecl() bool {
-	return true
-}
-
 func (n ExpParamNode) IsParam() bool {
 	return true
 }

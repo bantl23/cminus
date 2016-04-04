@@ -33,10 +33,6 @@ func (n StmtFunctionOutputNode) IsFunc() bool {
 	return true
 }
 
-func (n StmtFunctionOutputNode) IsDecl() bool {
-	return true
-}
-
 func (n StmtFunctionOutputNode) String() string {
 	return fmt.Sprintf("function_output %+v %+v [%+v]", n.Name(), n.ExpType(), n.Pos())
 }

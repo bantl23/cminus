@@ -17,7 +17,6 @@ type Node interface {
 	IsCompound() bool
 	IsArray() bool
 	IsInt() bool
-	IsDecl() bool
 	IsReturn() bool
 	IsId() bool
 	IsParam() bool
@@ -89,10 +88,6 @@ func (n NodeBase) IsArray() bool {
 }
 
 func (n NodeBase) IsInt() bool {
-	return false
-}
-
-func (n NodeBase) IsDecl() bool {
 	return false
 }
 

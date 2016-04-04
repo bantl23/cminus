@@ -46,10 +46,6 @@ func (n ExpVarArrayNode) IsInt() bool {
 	return false
 }
 
-func (n ExpVarArrayNode) IsDecl() bool {
-	return true
-}
-
 func (n ExpVarArrayNode) IsVar() bool {
 	return true
 }

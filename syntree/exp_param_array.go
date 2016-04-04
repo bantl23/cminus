@@ -40,10 +40,6 @@ func (n ExpParamArrayNode) IsInt() bool {
 	return false
 }
 
-func (n ExpParamArrayNode) IsDecl() bool {
-	return true
-}
-
 func (n ExpParamArrayNode) IsParam() bool {
 	return true
 }
