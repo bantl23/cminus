@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"os"
 )
@@ -74,23 +75,35 @@ func CheckReturnValue(node syntree.Node) {
 	}
 }
 
-var SibCnt int = 0
-
-func CheckFuncArgs(node syntree.Node) {
+func CheckFuncTypes(node syntree.Node) {
 	if node.IsCall() {
-		SibCnt = 0
-		if node.Children() != nil && node.Children()[0] != nil {
-			SibCnt = 1
-			sibling := node.Children()[0].Sibling()
-			for sibling != nil {
-				sibling = sibling.Sibling()
-				SibCnt++
+		if node.Children() != nil {
+			sib := node.Children()[0]
+			var sibSlice []symtbl.SymbolType
+			for sib != nil {
+				sym := GlbSymTblMap[sib.SymKey()].GetIdType(sib.Name())
+				sibSlice = append(sibSlice, sym)
+				sib = sib.Sibling()
 			}
-		}
-		args := GlbSymTblLst.SymTbl()[node.Name()].Args()
-		if len(args) != SibCnt {
-			log.ErrorLog.Printf(">>>>> Error calling %s with %d arguments but takes %d arguments [%+v]", node.Name(), SibCnt, len(args), node.Pos())
-			CheckErr = true
+			funSlice := GlbSymTblMap[node.SymKey()].GetIdArgs(node.Name())
+			if sibSlice == nil && funSlice != nil {
+				log.ErrorLog.Printf(">>>>> Error calling %s with 0 arguments but takes %d arguments [%+v]", node.Name(), len(funSlice), node.Pos())
+				CheckErr = true
+			} else if sibSlice != nil && funSlice == nil {
+				log.ErrorLog.Printf(">>>>> Error calling %s with %d arguments but takes 0 arguments [%+v]", node.Name(), len(sibSlice), node.Pos())
+				CheckErr = true
+			} else if len(sibSlice) != len(funSlice) {
+				log.ErrorLog.Printf(">>>>> Error calling %s with %d arguments but takes %d arguments [%+v]", node.Name(), len(sibSlice), len(funSlice), node.Pos())
+				CheckErr = true
+			} else {
+				for i := range sibSlice {
+					if sibSlice[i] != funSlice[i] {
+						log.ErrorLog.Printf(">>>>> Error calling %s with args %+v but expecting %+v [%+v]", node.Name(), sibSlice, funSlice, node.Pos())
+						CheckErr = true
+						break
+					}
+				}
+			}
 		}
 	}
 }
@@ -108,7 +121,7 @@ func postcheck(node syntree.Node) {
 	CheckMainLastDeclare(node)
 	CheckArrayIndexSize(node)
 	CheckReturnValue(node)
-	CheckFuncArgs(node)
+	CheckFuncTypes(node)
 
 	if node.IsFunc() || node.IsCompound() {
 		curSymTblLst = curSymTblLst.Parent()
