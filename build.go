@@ -15,6 +15,7 @@ func PrintTableList() {
 
 func NewGlbSymTblLst() {
 	GlbSymTblLst = symtbl.NewSymTblLst(symtbl.ROOT_SCOPE, nil)
+	symtbl.SymTblLstMap[GlbSymTblLst.Scope()] = GlbSymTblLst
 	curSymTblLst = GlbSymTblLst
 	input := syntree.NewStmtFunctionInputNode()
 	output := syntree.NewStmtFunctionOutputNode()
@@ -43,6 +44,7 @@ func prebuild(node syntree.Node) {
 	}
 	if node.IsFunc() || node.IsCompound() {
 		curSymTblLst = symtbl.NewSymTblLst(node.Name(), curSymTblLst)
+		symtbl.SymTblLstMap[curSymTblLst.Scope()] = curSymTblLst
 	}
 }
 

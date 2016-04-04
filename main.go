@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
@@ -16,6 +17,7 @@ func main() {
 	echo := false
 	print_parse_tree := false
 	print_symbol_table := false
+	print_symbol_map := false
 	trace_scan := false
 	trace_parse := false
 	trace_analyze := false
@@ -76,6 +78,11 @@ func main() {
 			Usage:       "Prints symbol table",
 			Destination: &print_symbol_table,
 		},
+		cli.BoolFlag{
+			Name:        "print-symbol-map",
+			Usage:       "Prints symbol map",
+			Destination: &print_symbol_map,
+		},
 	}
 	app.Action = func(c *cli.Context) {
 
@@ -128,6 +135,13 @@ func main() {
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
 							PrintTableList()
+						}
+						if print_symbol_map == true {
+							fmt.Println("<<<<")
+							log.InfoLog.Printf("symbol map")
+							log.InfoLog.Printf("==========")
+							fmt.Println(">>>>")
+							symtbl.PrintTableMap(4)
 							fmt.Println("<<<<")
 						}
 						log.InfoLog.Printf("analyzing\n")

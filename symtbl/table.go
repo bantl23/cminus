@@ -89,6 +89,21 @@ type SymTblLst struct {
 	children []*SymTblLst
 }
 
+var SymTblLstMap map[string]*SymTblLst = make(map[string]*SymTblLst)
+
+func PrintTableMap(indent int) {
+	for k, v := range SymTblLstMap {
+		for i := 0; i < indent; i++ {
+			fmt.Print(" ")
+		}
+		scope := "nil"
+		if v.Parent() != nil {
+			scope = v.Parent().Scope()
+		}
+		fmt.Printf("%s => %s\n", k, scope)
+	}
+}
+
 func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
 	s := new(SymTblLst)
 	if scope == "" {
