@@ -2,6 +2,7 @@ package symtbl
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type SymTblVal struct {
@@ -79,6 +80,7 @@ func PrintTable(s *SymTbl, indent int) {
 var SCOPE_SEPARATOR string = "$"
 var ROOT_SCOPE string = "global"
 var INNER_SCOPE string = "inner"
+var INNER_COUNT int = 0
 
 type SymTblLst struct {
 	scope    string
@@ -90,7 +92,8 @@ type SymTblLst struct {
 func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
 	s := new(SymTblLst)
 	if scope == "" {
-		scope = INNER_SCOPE
+		scope = INNER_SCOPE + strconv.FormatInt(int64(INNER_COUNT), 10)
+		INNER_COUNT++
 	}
 	s.scope = SCOPE_SEPARATOR + scope
 	s.symTbl = *NewSymTbl()
