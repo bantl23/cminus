@@ -15,6 +15,7 @@ func NewExpOpNode(row int, col int, tokType TokenType) Node {
 	n.tokType = tokType
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

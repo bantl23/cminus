@@ -15,6 +15,7 @@ func NewExpIdArrayNode(row int, col int, name string) Node {
 	n.name = name
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

@@ -15,6 +15,7 @@ func NewExpConstNode(row int, col int, value int) Node {
 	n.value = value
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

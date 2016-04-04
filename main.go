@@ -111,12 +111,12 @@ func main() {
 			}
 			ofilename := strings.TrimSuffix(ifilename, ".cm") + ".tm"
 
-			log.InfoLog.Printf("compiling %s\n", ifilename)
+			log.InfoLog.Printf("compiling %s", ifilename)
 			ifile, err := os.Open(ifilename)
 			if err == nil {
 				if parse == true {
-					log.InfoLog.Printf("scanning and parsing\n")
-					log.InfoLog.Printf("====================\n")
+					log.InfoLog.Printf("scanning and parsing")
+					log.InfoLog.Printf("====================")
 					yyParse(NewLexer(ifile))
 					if print_parse_tree == true {
 						log.InfoLog.Printf("parse tree")
@@ -126,14 +126,15 @@ func main() {
 						fmt.Println("<<<<")
 					}
 					if analyze == true {
-						log.InfoLog.Printf("building symbol table\n")
-						log.InfoLog.Printf("=====================\n")
+						log.InfoLog.Printf("building symbol table")
+						log.InfoLog.Printf("=====================")
 						BuildTableList(rootNode)
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
 							PrintTableList()
+							fmt.Println("<<<<")
 						}
 						if print_symbol_map == true {
 							fmt.Println("<<<<")
@@ -142,19 +143,26 @@ func main() {
 							fmt.Println(">>>>")
 							PrintTableMap()
 							fmt.Println("<<<<")
+							if print_parse_tree == true {
+								log.InfoLog.Printf("parse tree with symbol map keys")
+								log.InfoLog.Printf("===============================")
+								fmt.Println("<<<<")
+								syntree.PrintNodeWithSymKey(rootNode, 0)
+								fmt.Println(">>>>")
+							}
 						}
-						log.InfoLog.Printf("analyzing\n")
-						log.InfoLog.Printf("=========\n")
+						log.InfoLog.Printf("analyzing")
+						log.InfoLog.Printf("=========")
 						Analyze(rootNode)
 						if code == true {
-							log.InfoLog.Printf("generating code\n")
-							log.InfoLog.Printf("===============\n")
-							log.InfoLog.Printf("creating %s\n", ofilename)
+							log.InfoLog.Printf("generating code")
+							log.InfoLog.Printf("===============")
+							log.InfoLog.Printf("creating %s", ofilename)
 						}
 					}
 				}
 			} else {
-				log.ErrorLog.Printf("File open %s\n", err)
+				log.ErrorLog.Printf("File open %s", err)
 			}
 		}
 	}

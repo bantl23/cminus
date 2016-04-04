@@ -17,6 +17,7 @@ func NewStmtFunctionOutputNode() Node {
 	n.expType = VOID_EXP_TYPE
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

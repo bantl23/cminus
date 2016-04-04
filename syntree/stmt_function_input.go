@@ -17,6 +17,7 @@ func NewStmtFunctionInputNode() Node {
 	n.expType = INT_EXP_TYPE
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

@@ -25,12 +25,15 @@ type Node interface {
 	IsVar() bool
 	ExpType() ExpressionType
 	TokType() TokenType
+	SymKey() string
+	SetSymKey(string)
 }
 
 type NodeBase struct {
-	position Position
-	sibling  Node
-	children []Node
+	position  Position
+	sibling   Node
+	children  []Node
+	symbolKey string
 }
 
 func (n NodeBase) Pos() Position {
@@ -113,6 +116,14 @@ func (n NodeBase) IsVar() bool {
 	return false
 }
 
+func (n NodeBase) SymKey() string {
+	return n.symbolKey
+}
+
+func (n *NodeBase) SetSymKey(s string) {
+	n.symbolKey = s
+}
+
 func PrintNode(node Node, indent int) {
 	indent += 4
 	for node != nil {
@@ -122,6 +133,21 @@ func PrintNode(node Node, indent int) {
 		fmt.Printf("%+v\n", node)
 		for _, v := range node.Children() {
 			PrintNode(v, indent)
+		}
+		node = node.Sibling()
+	}
+	indent -= 4
+}
+
+func PrintNodeWithSymKey(node Node, indent int) {
+	indent += 4
+	for node != nil {
+		for i := 0; i < indent; i++ {
+			fmt.Print(" ")
+		}
+		fmt.Printf("%+v (%+v)\n", node, node.SymKey())
+		for _, v := range node.Children() {
+			PrintNodeWithSymKey(v, indent)
 		}
 		node = node.Sibling()
 	}

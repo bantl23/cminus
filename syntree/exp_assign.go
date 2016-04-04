@@ -13,6 +13,7 @@ func NewExpAssignNode(row int, col int) Node {
 	n.position = Position{row, col}
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

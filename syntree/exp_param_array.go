@@ -17,6 +17,7 @@ func NewExpParamArrayNode(row int, col int, expType ExpressionType, name string)
 	n.expType = expType
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 

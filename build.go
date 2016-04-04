@@ -51,6 +51,7 @@ func prebuild(node syntree.Node) {
 		curSymTblLst = symtbl.NewSymTblLst(node.Name(), curSymTblLst)
 		GlbSymTblMap[curSymTblLst.Scope()] = curSymTblLst
 	}
+	node.SetSymKey(curSymTblLst.Scope())
 }
 
 func postbuild(node syntree.Node) {

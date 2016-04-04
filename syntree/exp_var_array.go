@@ -19,6 +19,7 @@ func NewExpVarArrayNode(row int, col int, expType ExpressionType, name string, v
 	n.expType = expType
 	n.sibling = nil
 	n.children = nil
+	n.symbolKey = ""
 	return n
 }
 
