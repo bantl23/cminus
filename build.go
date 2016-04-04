@@ -8,14 +8,19 @@ import (
 
 var GlbSymTblLst *symtbl.SymTblLst
 var curSymTblLst *symtbl.SymTblLst
+var GlbSymTblMap symtbl.SymTblLstMap = make(symtbl.SymTblLstMap)
 
 func PrintTableList() {
 	symtbl.PrintTableList(GlbSymTblLst, 0)
 }
 
+func PrintTableMap() {
+	symtbl.PrintTableMap(GlbSymTblMap, 4)
+}
+
 func NewGlbSymTblLst() {
 	GlbSymTblLst = symtbl.NewSymTblLst(symtbl.ROOT_SCOPE, nil)
-	symtbl.SymTblLstMap[GlbSymTblLst.Scope()] = GlbSymTblLst
+	GlbSymTblMap[GlbSymTblLst.Scope()] = GlbSymTblLst
 	curSymTblLst = GlbSymTblLst
 	input := syntree.NewStmtFunctionInputNode()
 	output := syntree.NewStmtFunctionOutputNode()
@@ -44,7 +49,7 @@ func prebuild(node syntree.Node) {
 	}
 	if node.IsFunc() || node.IsCompound() {
 		curSymTblLst = symtbl.NewSymTblLst(node.Name(), curSymTblLst)
-		symtbl.SymTblLstMap[curSymTblLst.Scope()] = curSymTblLst
+		GlbSymTblMap[curSymTblLst.Scope()] = curSymTblLst
 	}
 }
 

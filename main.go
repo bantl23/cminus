@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/bantl23/cminus/log"
-	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
@@ -141,7 +140,7 @@ func main() {
 							log.InfoLog.Printf("symbol map")
 							log.InfoLog.Printf("==========")
 							fmt.Println(">>>>")
-							symtbl.PrintTableMap(4)
+							PrintTableMap()
 							fmt.Println("<<<<")
 						}
 						log.InfoLog.Printf("analyzing\n")

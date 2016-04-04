@@ -89,10 +89,10 @@ type SymTblLst struct {
 	children []*SymTblLst
 }
 
-var SymTblLstMap map[string]*SymTblLst = make(map[string]*SymTblLst)
+type SymTblLstMap map[string]*SymTblLst
 
-func PrintTableMap(indent int) {
-	for k, v := range SymTblLstMap {
+func PrintTableMap(s SymTblLstMap, indent int) {
+	for k, v := range s {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}

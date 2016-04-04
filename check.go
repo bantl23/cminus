@@ -82,7 +82,6 @@ func CheckFuncArgs(node syntree.Node) {
 		if node.Children() != nil && node.Children()[0] != nil {
 			SibCnt = 1
 			sibling := node.Children()[0].Sibling()
-			log.AnalyzeLog.Printf("child %+v sib %+v", node.Children()[0], sibling)
 			for sibling != nil {
 				sibling = sibling.Sibling()
 				SibCnt++
