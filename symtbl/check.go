@@ -1,8 +1,7 @@
-package main
+package symtbl
 
 import (
 	"github.com/bantl23/cminus/log"
-	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"os"
 )
@@ -79,7 +78,7 @@ func CheckFuncTypes(node syntree.Node) {
 	if node.IsCall() {
 		if node.Children() != nil {
 			sib := node.Children()[0]
-			var sibSlice []symtbl.SymbolType
+			var sibSlice []SymbolType
 			for sib != nil {
 				sym := GlbSymTblMap[sib.SymKey()].GetIdType(sib.Name())
 				sibSlice = append(sibSlice, sym)
@@ -97,7 +96,7 @@ func CheckFuncTypes(node syntree.Node) {
 				CheckErr = true
 			} else {
 				for i := range sibSlice {
-					if (funSlice[i] != sibSlice[i]) && (sibSlice[i] != symtbl.UNK_SYM_TYPE) && (sibSlice[i] != symtbl.FUNC_SYM_TYPE) && (sibSlice[i] != symtbl.ARR_SYM_TYPE) {
+					if (funSlice[i] != sibSlice[i]) && (sibSlice[i] != UNK_SYM_TYPE) && (sibSlice[i] != FUNC_SYM_TYPE) && (sibSlice[i] != ARR_SYM_TYPE) {
 						log.ErrorLog.Printf(">>>>> Error calling %s with args %+v but expecting %+v [%+v]", node.Name(), sibSlice, funSlice, node.Pos())
 						CheckErr = true
 						break

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bantl23/cminus/gen"
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
 	"os"
@@ -95,7 +96,7 @@ func main() {
 		log.CodeLog = log.InitLog(trace_codegen)
 
 		if len(c.Args()) == 0 {
-			log.ErrorLog.Println("Must supply filename(s)")
+			log.ErrorLog.Println(">>>>> Error must supply filename(s)")
 			os.Exit(1)
 		}
 		if analyze == false {
@@ -129,12 +130,12 @@ func main() {
 					if analyze == true {
 						log.InfoLog.Printf("building symbol table")
 						log.InfoLog.Printf("=====================")
-						BuildTableList(rootNode)
+						symtbl.BuildTableList(rootNode)
 						if print_symbol_table == true {
 							log.InfoLog.Printf("symbol table")
 							log.InfoLog.Printf("============")
 							fmt.Println(">>>>")
-							PrintTableList()
+							symtbl.GlbPrintTableList()
 							fmt.Println("<<<<")
 						}
 						if print_symbol_map == true {
@@ -142,7 +143,7 @@ func main() {
 							log.InfoLog.Printf("symbol map")
 							log.InfoLog.Printf("==========")
 							fmt.Println(">>>>")
-							PrintTableMap()
+							symtbl.GlbPrintTableMap()
 							fmt.Println("<<<<")
 							if print_parse_tree == true {
 								log.InfoLog.Printf("parse tree with symbol map keys")
@@ -154,7 +155,7 @@ func main() {
 						}
 						log.InfoLog.Printf("analyzing")
 						log.InfoLog.Printf("=========")
-						Analyze(rootNode)
+						symtbl.Analyze(rootNode)
 						if code == true {
 							log.InfoLog.Printf("generating code")
 							log.InfoLog.Printf("===============")
@@ -164,7 +165,7 @@ func main() {
 					}
 				}
 			} else {
-				log.ErrorLog.Printf("File open %s", err)
+				log.ErrorLog.Printf(">>>>> Error file open %s", err)
 			}
 		}
 	}

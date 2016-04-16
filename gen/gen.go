@@ -3,6 +3,7 @@ package gen
 import (
 	"fmt"
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"os"
 )
@@ -88,7 +89,7 @@ func (g *Gen) emitSkip(amount int) int {
 func (g *Gen) emitBackup(loc int) {
 	log.CodeLog.Printf("backing up to %d\n", loc)
 	if loc > g.highLoc {
-		log.ErrorLog.Printf("Error in emitBackup\n")
+		log.ErrorLog.Printf(">>>>> Error in emitBackup\n")
 	}
 	g.loc = loc
 }
@@ -157,6 +158,16 @@ func (g *Gen) genConst(node syntree.Node) {
 	g.emitRM("LDC", g.ac, node.Value(), 0, comment)
 }
 
+func (g *Gen) getId(node syntree.Node) {
+	comment := fmt.Sprintf("load %s with %d", node.Name(), node.Value())
+	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
+		memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+		g.emitRM("LD", g.ac, int(memLoc), g.gp, comment)
+	} else {
+		log.ErrorLog.Printf(">>>>> Error %s not found.", node.Name())
+	}
+}
+
 func Generate(node syntree.Node, filename string) {
 	g := NewGen(filename)
 	if g != nil {
@@ -164,6 +175,6 @@ func Generate(node syntree.Node, filename string) {
 		g.gen(node)
 		g.halt()
 	} else {
-		log.ErrorLog.Printf("Error opening %s", filename)
+		log.ErrorLog.Printf(">>>>> Error opening %s", filename)
 	}
 }

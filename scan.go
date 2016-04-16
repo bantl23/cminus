@@ -136,7 +136,7 @@ func (l *Lexer) GetToken(value string, lval *yySymType) int {
 		lval.yys = 0
 	default:
 		lval.yys = yyErrCode
-		log.ErrorLog.Printf("Unknown token\n")
+		log.ErrorLog.Printf(">>>>> Error unknown token\n")
 	}
 	log.ScanLog.Printf("token: %+v", l)
 	return lval.yys
@@ -194,7 +194,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			if err == io.EOF {
 				l.tokName = "EOF"
 			} else {
-				log.ErrorLog.Printf("File read %s\n", err)
+				log.ErrorLog.Printf(">>>>> Error file read %s\n", err)
 			}
 			keepProcessing = false
 		}
@@ -203,7 +203,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 }
 
 func (l *Lexer) Error(e string) {
-	log.ErrorLog.Printf("%s [%+v]\n", e, l)
+	log.ErrorLog.Printf(">>>>> Error %s [%+v]\n", e, l)
 }
 
 func (l *Lexer) FileName() string {

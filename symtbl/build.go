@@ -1,32 +1,31 @@
-package main
+package symtbl
 
 import (
 	"github.com/bantl23/cminus/log"
-	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 )
 
-var GlbSymTblLst *symtbl.SymTblLst
-var curSymTblLst *symtbl.SymTblLst
-var GlbSymTblMap symtbl.SymTblLstMap = make(symtbl.SymTblLstMap)
+var GlbSymTblLst *SymTblLst
+var curSymTblLst *SymTblLst
+var GlbSymTblMap SymTblLstMap = make(SymTblLstMap)
 
-func PrintTableList() {
-	symtbl.PrintTableList(GlbSymTblLst, 0)
+func GlbPrintTableList() {
+	PrintTableList(GlbSymTblLst, 0)
 }
 
-func PrintTableMap() {
-	symtbl.PrintTableMap(GlbSymTblMap, 4)
+func GlbPrintTableMap() {
+	PrintTableMap(GlbSymTblMap, 4)
 }
 
 func NewGlbSymTblLst() {
-	GlbSymTblLst = symtbl.NewSymTblLst(symtbl.ROOT_SCOPE, nil)
+	GlbSymTblLst = NewSymTblLst(ROOT_SCOPE, nil)
 	GlbSymTblMap[GlbSymTblLst.Scope()] = GlbSymTblLst
 	curSymTblLst = GlbSymTblLst
 	input := syntree.NewStmtFunctionInputNode()
 	output := syntree.NewStmtFunctionOutputNode()
 	InsertFuncInSymTbl(curSymTblLst, input)
 	InsertFuncInSymTbl(curSymTblLst, output)
-	GlbSymTblLst.SymTbl()[output.Name()].AddArg(symtbl.INT_SYM_TYPE)
+	GlbSymTblLst.SymTbl()[output.Name()].AddArg(INT_SYM_TYPE)
 }
 
 func BuildTableList(node syntree.Node) {
@@ -48,7 +47,7 @@ func prebuild(node syntree.Node) {
 		InsertVarParamInSymTbl(curSymTblLst, node)
 	}
 	if node.IsFunc() || node.IsCompound() {
-		curSymTblLst = symtbl.NewSymTblLst(node.Name(), curSymTblLst)
+		curSymTblLst = NewSymTblLst(node.Name(), curSymTblLst)
 		GlbSymTblMap[curSymTblLst.Scope()] = curSymTblLst
 	}
 	node.SetSymKey(curSymTblLst.Scope())

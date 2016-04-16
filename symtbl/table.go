@@ -164,6 +164,17 @@ func (s *SymTblLst) HasId(variable string) bool {
 	return has
 }
 
+func (s *SymTblLst) GetMemLoc(variable string) MemLoc {
+	memLoc := MemLoc(-1)
+	lst := s
+	for lst != nil {
+		if val, ok := lst.symTbl[variable]; ok {
+			memLoc = val.MemLoc()
+		}
+	}
+	return memLoc
+}
+
 func (s *SymTblLst) GetIdType(variable string) SymbolType {
 	typ := UNK_SYM_TYPE
 	lst := s
