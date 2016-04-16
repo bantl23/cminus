@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bantl23/cminus/gen"
 	"github.com/bantl23/cminus/log"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
@@ -158,6 +159,7 @@ func main() {
 							log.InfoLog.Printf("generating code")
 							log.InfoLog.Printf("===============")
 							log.InfoLog.Printf("creating %s", ofilename)
+							gen.Generate(rootNode, ofilename)
 						}
 					}
 				}
