@@ -13,7 +13,13 @@ func InsertFuncInSymTbl(table *symtbl.SymTblLst, node syntree.Node) {
 	if value, ok := table.SymTbl()[node.Name()]; ok {
 		value.AddLine(node.Pos().Row())
 	} else {
-		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, symtbl.FUNC_SYM_TYPE, node.Pos().Row())
+		r := symtbl.UNK_RET_TYPE
+		if node.ExpType() == syntree.VOID_EXP_TYPE {
+			r = symtbl.VOID_RET_TYPE
+		} else if node.ExpType() == syntree.INT_EXP_TYPE {
+			r = symtbl.INT_RET_TYPE
+		}
+		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, symtbl.FUNC_SYM_TYPE, r, node.Pos().Row())
 		glbMemLoc.Inc()
 
 		if len(node.Children()) > 0 {
@@ -43,7 +49,7 @@ func InsertVarParamInSymTbl(table *symtbl.SymTblLst, node syntree.Node) {
 		} else if node.IsInt() {
 			t = symtbl.INT_SYM_TYPE
 		}
-		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, t, node.Pos().Row())
+		table.SymTbl()[node.Name()] = symtbl.NewSymTblVal(glbMemLoc, t, symtbl.UNK_RET_TYPE, node.Pos().Row())
 		glbMemLoc.Inc()
 	}
 }

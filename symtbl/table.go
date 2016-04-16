@@ -9,13 +9,15 @@ type SymTblVal struct {
 	memLoc  MemLoc
 	symType SymbolType
 	args    []SymbolType
+	retType ReturnType
 	lines   []int
 }
 
-func NewSymTblVal(memLoc MemLoc, symType SymbolType, line int) *SymTblVal {
+func NewSymTblVal(memLoc MemLoc, symType SymbolType, retType ReturnType, line int) *SymTblVal {
 	s := new(SymTblVal)
 	s.memLoc = memLoc
 	s.symType = symType
+	s.retType = retType
 	if line != -1 {
 		s.lines = append(s.lines, line)
 	}
@@ -45,6 +47,10 @@ func (s *SymTblVal) AddArg(arg SymbolType) {
 	s.args = append(s.args, arg)
 }
 
+func (s SymTblVal) RetType() ReturnType {
+	return s.retType
+}
+
 func (s SymTblVal) Lines() []int {
 	return s.lines
 }
@@ -58,17 +64,17 @@ func PrintTable(s *SymTbl, indent int) {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
-		fmt.Printf("Variable Name Memory Location Type Args Lines\n")
+		fmt.Printf("Variable Name Memory Location Type RType Args Lines\n")
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
-		fmt.Printf("============= =============== ==== ==== =====\n")
+		fmt.Printf("============= =============== ==== ===== ==== =====\n")
 		for k, v := range *s {
 			for i := 0; i < indent; i++ {
 				fmt.Print(" ")
 			}
 			if v != nil {
-				fmt.Printf("%13s 0x%013x %4s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.Args(), v.Lines())
+				fmt.Printf("%13s 0x%013x %4s %5s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.RetType(), v.Args(), v.Lines())
 			} else {
 				fmt.Printf("%13s\n", k)
 			}
