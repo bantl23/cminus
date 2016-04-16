@@ -17,6 +17,14 @@ func NewExpAssignNode(row int, col int) Node {
 	return n
 }
 
+func (n ExpAssignNode) IsExp() bool {
+	return true
+}
+
+func (n ExpAssignNode) IsAssign() bool {
+	return true
+}
+
 func (n ExpAssignNode) String() string {
 	return fmt.Sprintf("assign [%+v]", n.Pos())
 }

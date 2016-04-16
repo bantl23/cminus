@@ -23,6 +23,10 @@ func (n ExpCallNode) Name() string {
 	return n.name
 }
 
+func (n ExpCallNode) IsExp() bool {
+	return true
+}
+
 func (n ExpCallNode) IsCall() bool {
 	return true
 }

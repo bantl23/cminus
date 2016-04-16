@@ -13,6 +13,8 @@ type Node interface {
 	SetPos(int, int)
 	Name() string
 	Value() int
+	IsExp() bool
+	IsStmt() bool
 	IsFunc() bool
 	IsCompound() bool
 	IsArray() bool
@@ -23,6 +25,10 @@ type Node interface {
 	IsCall() bool
 	IsVar() bool
 	IsOp() bool
+	IsConst() bool
+	IsAssign() bool
+	IsSelection() bool
+	IsIteration() bool
 	ExpType() ExpressionType
 	TokType() TokenType
 	SymKey() string
@@ -76,6 +82,14 @@ func (n NodeBase) Value() int {
 	return 0
 }
 
+func (n NodeBase) IsExp() bool {
+	return false
+}
+
+func (n NodeBase) IsStmt() bool {
+	return false
+}
+
 func (n NodeBase) IsFunc() bool {
 	return false
 }
@@ -113,6 +127,22 @@ func (n NodeBase) IsVar() bool {
 }
 
 func (n NodeBase) IsOp() bool {
+	return false
+}
+
+func (n NodeBase) IsConst() bool {
+	return false
+}
+
+func (n NodeBase) IsAssign() bool {
+	return false
+}
+
+func (n NodeBase) IsSelection() bool {
+	return false
+}
+
+func (n NodeBase) IsIteration() bool {
 	return false
 }
 

@@ -113,8 +113,31 @@ func (g *Gen) halt() {
 func (g *Gen) gen(node syntree.Node) {
 	if node != nil {
 		log.CodeLog.Printf("%+v\n", node)
+		if node.IsStmt() {
+			g.genStmt(node)
+		} else if node.IsExp() {
+			g.genExp(node)
+		}
 		g.gen(node.Sibling())
 	}
+}
+
+func (g *Gen) genStmt(node syntree.Node) {
+}
+
+func (g *Gen) genExp(node syntree.Node) {
+	if node.IsConst() {
+		g.genConst(node)
+	} else if node.IsId() {
+		if node.IsArray() {
+		} else {
+		}
+	}
+}
+
+func (g *Gen) genConst(node syntree.Node) {
+	comment := fmt.Sprintf("load const with %d", node.Value())
+	g.emitRM("LDC", g.ac, node.Value(), 0, comment)
 }
 
 func Generate(node syntree.Node, filename string) {

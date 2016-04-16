@@ -23,6 +23,10 @@ func (n ExpIdNode) Name() string {
 	return n.name
 }
 
+func (n ExpIdNode) IsExp() bool {
+	return true
+}
+
 func (n ExpIdNode) IsId() bool {
 	return true
 }

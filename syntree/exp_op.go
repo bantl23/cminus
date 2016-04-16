@@ -23,6 +23,10 @@ func (n ExpOpNode) TokType() TokenType {
 	return n.tokType
 }
 
+func (n ExpOpNode) IsExp() bool {
+	return true
+}
+
 func (n ExpOpNode) IsOp() bool {
 	return true
 }

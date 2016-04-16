@@ -29,6 +29,14 @@ func (n ExpParamArrayNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpParamArrayNode) IsExp() bool {
+	return true
+}
+
+func (n ExpParamArrayNode) IsParam() bool {
+	return true
+}
+
 func (n ExpParamArrayNode) IsArray() bool {
 	return true
 }
@@ -38,10 +46,6 @@ func (n ExpParamArrayNode) IsInt() bool {
 		return true
 	}
 	return false
-}
-
-func (n ExpParamArrayNode) IsParam() bool {
-	return true
 }
 
 func (n ExpParamArrayNode) String() string {

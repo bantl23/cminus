@@ -23,7 +23,15 @@ func (n ExpIdArrayNode) Name() string {
 	return n.name
 }
 
+func (n ExpIdArrayNode) IsExp() bool {
+	return true
+}
+
 func (n ExpIdArrayNode) IsId() bool {
+	return true
+}
+
+func (n ExpIdArrayNode) IsArray() bool {
 	return true
 }
 

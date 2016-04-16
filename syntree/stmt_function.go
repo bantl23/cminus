@@ -29,6 +29,10 @@ func (n StmtFunctionNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n StmtFunctionNode) IsStmt() bool {
+	return true
+}
+
 func (n StmtFunctionNode) IsFunc() bool {
 	return true
 }

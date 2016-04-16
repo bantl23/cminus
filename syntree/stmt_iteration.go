@@ -17,6 +17,14 @@ func NewStmtIterationNode(row int, col int) Node {
 	return n
 }
 
+func (n StmtIterationNode) IsStmt() bool {
+	return true
+}
+
+func (n StmtIterationNode) IsIteration() bool {
+	return true
+}
+
 func (n StmtIterationNode) String() string {
 	return fmt.Sprintf("iteration [%+v]", n.Pos())
 }

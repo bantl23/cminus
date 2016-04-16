@@ -17,6 +17,14 @@ func NewStmtSelectionNode(row int, col int) Node {
 	return n
 }
 
+func (n StmtSelectionNode) IsStmt() bool {
+	return true
+}
+
+func (n StmtSelectionNode) IsSelection() bool {
+	return true
+}
+
 func (n StmtSelectionNode) String() string {
 	return fmt.Sprintf("selection [%+v]", n.Pos())
 }

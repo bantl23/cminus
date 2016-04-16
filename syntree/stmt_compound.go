@@ -17,6 +17,10 @@ func NewStmtCompoundNode(row int, col int) Node {
 	return n
 }
 
+func (n StmtCompoundNode) IsStmt() bool {
+	return true
+}
+
 func (n StmtCompoundNode) IsCompound() bool {
 	return true
 }

@@ -29,15 +29,19 @@ func (n ExpVarNode) ExpType() ExpressionType {
 	return n.expType
 }
 
+func (n ExpVarNode) IsExp() bool {
+	return true
+}
+
+func (n ExpVarNode) IsVar() bool {
+	return true
+}
+
 func (n ExpVarNode) IsInt() bool {
 	if n.expType == INT_EXP_TYPE {
 		return true
 	}
 	return false
-}
-
-func (n ExpVarNode) IsVar() bool {
-	return true
 }
 
 func (n ExpVarNode) String() string {
