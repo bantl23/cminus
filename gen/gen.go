@@ -123,12 +123,29 @@ func (g *Gen) gen(node syntree.Node) {
 }
 
 func (g *Gen) genStmt(node syntree.Node) {
+	if node.IsCompound() {
+	} else if node.IsFunc() {
+	} else if node.IsIteration() {
+	} else if node.IsReturn() {
+	} else if node.IsSelection() {
+	}
 }
 
 func (g *Gen) genExp(node syntree.Node) {
-	if node.IsConst() {
+	if node.IsAssign() {
+	} else if node.IsCall() {
+	} else if node.IsConst() {
 		g.genConst(node)
+	} else if node.IsOp() {
 	} else if node.IsId() {
+		if node.IsArray() {
+		} else {
+		}
+	} else if node.IsParam() {
+		if node.IsArray() {
+		} else {
+		}
+	} else if node.IsVar() {
 		if node.IsArray() {
 		} else {
 		}
