@@ -23,6 +23,10 @@ func (n ExpOpNode) TokType() TokenType {
 	return n.tokType
 }
 
+func (n ExpOpNode) IsOp() bool {
+	return true
+}
+
 func (n ExpOpNode) String() string {
 	return fmt.Sprintf("op %+v [%+v]", n.TokType(), n.Pos())
 }

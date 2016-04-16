@@ -97,7 +97,7 @@ func CheckFuncTypes(node syntree.Node) {
 				CheckErr = true
 			} else {
 				for i := range sibSlice {
-					if sibSlice[i] != funSlice[i] {
+					if (funSlice[i] != sibSlice[i]) && (sibSlice[i] != symtbl.UNK_SYM_TYPE) && (sibSlice[i] != symtbl.FUNC_SYM_TYPE) && (sibSlice[i] != symtbl.ARR_SYM_TYPE) {
 						log.ErrorLog.Printf(">>>>> Error calling %s with args %+v but expecting %+v [%+v]", node.Name(), sibSlice, funSlice, node.Pos())
 						CheckErr = true
 						break

@@ -22,6 +22,7 @@ type Node interface {
 	IsParam() bool
 	IsCall() bool
 	IsVar() bool
+	IsOp() bool
 	ExpType() ExpressionType
 	TokType() TokenType
 	SymKey() string
@@ -108,6 +109,10 @@ func (n NodeBase) IsCall() bool {
 }
 
 func (n NodeBase) IsVar() bool {
+	return false
+}
+
+func (n NodeBase) IsOp() bool {
 	return false
 }
 
