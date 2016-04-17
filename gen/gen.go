@@ -42,7 +42,7 @@ func NewGen(filename string) *Gen {
 
 func (g *Gen) emit(out string) {
 	g.file.WriteString(out)
-	log.CodeLog.Printf(out)
+	log.DstLog.Printf(out)
 }
 
 func (g *Gen) emitRO(opcode string, target int, source0 int, source1 int, comment string) {
@@ -125,30 +125,44 @@ func (g *Gen) gen(node syntree.Node) {
 
 func (g *Gen) genStmt(node syntree.Node) {
 	if node.IsCompound() {
+		log.CodeLog.Printf("compound")
 	} else if node.IsFunc() {
+		log.CodeLog.Printf("func")
 	} else if node.IsIteration() {
+		log.CodeLog.Printf("iteration")
 	} else if node.IsReturn() {
+		log.CodeLog.Printf("return")
 	} else if node.IsSelection() {
+		log.CodeLog.Printf("selection")
 	}
 }
 
 func (g *Gen) genExp(node syntree.Node) {
 	if node.IsAssign() {
+		log.CodeLog.Printf("assign")
 	} else if node.IsCall() {
+		log.CodeLog.Printf("call")
 	} else if node.IsConst() {
-		g.genConst(node)
+		log.CodeLog.Printf("const")
 	} else if node.IsOp() {
+		log.CodeLog.Printf("op")
 	} else if node.IsId() {
 		if node.IsArray() {
+			log.CodeLog.Printf("id arr")
 		} else {
+			log.CodeLog.Printf("id")
 		}
 	} else if node.IsParam() {
 		if node.IsArray() {
+			log.CodeLog.Printf("param arr")
 		} else {
+			log.CodeLog.Printf("param")
 		}
 	} else if node.IsVar() {
 		if node.IsArray() {
+			log.CodeLog.Printf("var arr")
 		} else {
+			log.CodeLog.Printf("var")
 		}
 	}
 }

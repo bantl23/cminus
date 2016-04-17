@@ -15,10 +15,11 @@ func main() {
 	parse := true
 	analyze := true
 	code := true
-	echo := false
+	print_source_code := false
 	print_parse_tree := false
 	print_symbol_table := false
 	print_symbol_map := false
+	print_machine_code := false
 	trace_scan := false
 	trace_parse := false
 	trace_analyze := false
@@ -65,9 +66,9 @@ func main() {
 			Destination: &trace_codegen,
 		},
 		cli.BoolFlag{
-			Name:        "echo",
+			Name:        "print-source-code",
 			Usage:       "Print source code",
-			Destination: &echo,
+			Destination: &print_source_code,
 		},
 		cli.BoolFlag{
 			Name:        "print-parse-tree",
@@ -84,12 +85,18 @@ func main() {
 			Usage:       "Prints symbol map",
 			Destination: &print_symbol_map,
 		},
+		cli.BoolFlag{
+			Name:        "print-machine-code",
+			Usage:       "Print machine code",
+			Destination: &print_machine_code,
+		},
 	}
 	app.Action = func(c *cli.Context) {
 
 		log.InfoLog = log.InitLog(true)
 		log.ErrorLog = log.InitLog(true)
-		log.EchoLog = log.InitLog(echo)
+		log.SrcLog = log.InitLog(print_source_code)
+		log.DstLog = log.InitLog(print_machine_code)
 		log.ScanLog = log.InitLog(trace_scan)
 		log.ParseLog = log.InitLog(trace_parse)
 		log.AnalyzeLog = log.InitLog(trace_analyze)

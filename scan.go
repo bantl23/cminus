@@ -155,7 +155,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				l.column = 1
 				l.prevColumn = 0
 				l.readLine = false
-				log.EchoLog.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
+				log.SrcLog.Printf("%d: %s\n", l.row, strings.TrimSpace(l.curLine))
 			}
 		}
 		if err == nil {
