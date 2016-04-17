@@ -170,7 +170,9 @@ func (s *SymTblLst) GetMemLoc(variable string) MemLoc {
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
 			memLoc = val.MemLoc()
+			break
 		}
+		lst = lst.parent
 	}
 	return memLoc
 }
@@ -181,6 +183,7 @@ func (s *SymTblLst) GetIdType(variable string) SymbolType {
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
 			typ = val.SymType()
+			break
 		}
 		lst = lst.parent
 	}
@@ -193,6 +196,7 @@ func (s *SymTblLst) GetIdArgs(variable string) []SymbolType {
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
 			typ = val.Args()
+			break
 		}
 		lst = lst.parent
 	}

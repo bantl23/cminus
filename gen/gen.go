@@ -102,7 +102,8 @@ func (g *Gen) emitRestore() {
 func (g *Gen) load() {
 	g.emitComment("cminus compilation into tiny machine for " + g.filename)
 	g.emitComment("prelude beg")
-	g.emitRM("LD", g.mp, 0, g.ac, "load maxaddress from location 0")
+	g.emitRM("LD", g.gp, 0, g.ac, "load maxaddress from location 0")
+	g.emitRM("LDA", g.mp, 0, g.gp, "copy gp to mp")
 	g.emitRM("ST", g.ac, 0, g.ac, "clear location 0")
 	g.emitComment("prelude end")
 }
@@ -111,74 +112,151 @@ func (g *Gen) halt() {
 	g.emitRO("HALT", 0, 0, 0, "halting program")
 }
 
-func (g *Gen) gen(node syntree.Node) {
-	if node != nil {
-		log.CodeLog.Printf("%+v\n", node)
-		if node.IsStmt() {
-			g.genStmt(node)
-		} else if node.IsExp() {
-			g.genExp(node)
-		}
-		g.gen(node.Sibling())
+func (g *Gen) genCompound(node syntree.Node) {
+	log.CodeLog.Printf("=> compound %+v", node)
+	for _, n := range node.Children() {
+		g.gen(n)
 	}
+	log.CodeLog.Printf("<= compound %+v", node)
 }
 
-func (g *Gen) genStmt(node syntree.Node) {
-	if node.IsCompound() {
-		log.CodeLog.Printf("compound")
-	} else if node.IsFunc() {
-		log.CodeLog.Printf("func")
-	} else if node.IsIteration() {
-		log.CodeLog.Printf("iteration")
-	} else if node.IsReturn() {
-		log.CodeLog.Printf("return")
-	} else if node.IsSelection() {
-		log.CodeLog.Printf("selection")
+func (g *Gen) genFunction(node syntree.Node) {
+	log.CodeLog.Printf("=> function %+v", node)
+	for _, n := range node.Children() {
+		g.gen(n)
 	}
+	log.CodeLog.Printf("<= function %+v", node)
 }
 
-func (g *Gen) genExp(node syntree.Node) {
-	if node.IsAssign() {
-		log.CodeLog.Printf("assign")
-	} else if node.IsCall() {
-		log.CodeLog.Printf("call")
-	} else if node.IsConst() {
-		log.CodeLog.Printf("const")
-	} else if node.IsOp() {
-		log.CodeLog.Printf("op")
-	} else if node.IsId() {
-		if node.IsArray() {
-			log.CodeLog.Printf("id arr")
-		} else {
-			log.CodeLog.Printf("id")
-		}
-	} else if node.IsParam() {
-		if node.IsArray() {
-			log.CodeLog.Printf("param arr")
-		} else {
-			log.CodeLog.Printf("param")
-		}
-	} else if node.IsVar() {
-		if node.IsArray() {
-			log.CodeLog.Printf("var arr")
-		} else {
-			log.CodeLog.Printf("var")
-		}
+func (g *Gen) genIteration(node syntree.Node) {
+	log.CodeLog.Printf("=> iteration %+v %d", node, len(node.Children()))
+	for _, n := range node.Children() {
+		g.gen(n)
 	}
+	log.CodeLog.Printf("<= iteration %+v", node)
+}
+
+func (g *Gen) genReturn(node syntree.Node) {
+	log.CodeLog.Printf("=> return %+v", node)
+	g.gen(node)
+	log.CodeLog.Printf("<= return %+v", node)
+}
+
+func (g *Gen) genSelection(node syntree.Node) {
+	log.CodeLog.Printf("=> selection %+v (%d)", node, len(node.Children()))
+	for _, n := range node.Children() {
+		g.gen(n)
+	}
+	log.CodeLog.Printf("<= selection %+v (%d)", node, len(node.Children()))
+}
+
+func (g *Gen) genAssign(node syntree.Node) {
+	log.CodeLog.Printf("=> assign %+v", node)
+	for _, n := range node.Children() {
+		log.CodeLog.Printf("%+v", n)
+		g.gen(n)
+	}
+	log.CodeLog.Printf("<= assign %+v", node)
+}
+
+func (g *Gen) genCall(node syntree.Node) {
+	log.CodeLog.Printf("=> call %+v", node)
+	for _, n := range node.Children() {
+		g.gen(n)
+	}
+	log.CodeLog.Printf("<= call %+v", node)
 }
 
 func (g *Gen) genConst(node syntree.Node) {
+	log.CodeLog.Printf("=> const %+v", node)
 	comment := fmt.Sprintf("load const with %d", node.Value())
 	g.emitRM("LDC", g.ac, node.Value(), 0, comment)
+	log.CodeLog.Printf("<= const %+v", node)
 }
 
-func (g *Gen) getId(node syntree.Node) {
-	comment := fmt.Sprintf("load %s with %d", node.Name(), node.Value())
+func (g *Gen) genOp(node syntree.Node) {
+	log.CodeLog.Printf("=> op %+v", node)
+	for _, n := range node.Children() {
+		g.gen(n)
+	}
+	log.CodeLog.Printf("<= op %+v", node)
+}
+
+func (g *Gen) genId(node syntree.Node) {
+	/*
+		comment := fmt.Sprintf("load %s with %d", node.Name(), node.Value())
+		if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
+			memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+			g.emitRM("LD", g.ac, int(memLoc), g.gp, comment)
+		} else {
+			log.ErrorLog.Printf(">>>>> Error %s not found.", node.Name())
+		}
+	*/
+
+	log.CodeLog.Printf("searching for %s", node.Name())
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
 		memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		g.emitRM("LD", g.ac, int(memLoc), g.gp, comment)
+		log.CodeLog.Printf("found %s %+v", node.Name(), memLoc)
+	}
+
+	if node.IsArray() {
+		log.CodeLog.Printf("=> id_arr %+v", node)
+		g.gen(node.Children()[0])
+		log.CodeLog.Printf("<= id_arr %+v", node)
 	} else {
-		log.ErrorLog.Printf(">>>>> Error %s not found.", node.Name())
+		log.CodeLog.Printf("=> id %+v", node)
+		log.CodeLog.Printf("<= id %+v", node)
+	}
+}
+
+func (g *Gen) genParam(node syntree.Node) {
+	if node.IsArray() {
+		log.CodeLog.Printf("=> param_arr %+v", node)
+		log.CodeLog.Printf("<= param_arr %+v", node)
+	} else {
+		log.CodeLog.Printf("=> param %+v", node)
+		log.CodeLog.Printf("<= param %+v", node)
+	}
+}
+
+func (g *Gen) genVar(node syntree.Node) {
+	if node.IsArray() {
+		log.CodeLog.Printf("=> var_arr %+v", node)
+		log.CodeLog.Printf("<= var_arr %+v", node)
+	} else {
+		log.CodeLog.Printf("=> var %+v", node)
+		log.CodeLog.Printf("<= var %+v", node)
+	}
+}
+
+func (g *Gen) gen(node syntree.Node) {
+	if node != nil {
+		if node.IsCompound() {
+			g.genCompound(node)
+		} else if node.IsFunc() {
+			g.genFunction(node)
+		} else if node.IsIteration() {
+			g.genIteration(node)
+		} else if node.IsReturn() {
+			g.genReturn(node)
+		} else if node.IsSelection() {
+			g.genSelection(node)
+		} else if node.IsAssign() {
+			g.genAssign(node)
+		} else if node.IsCall() {
+			g.genCall(node)
+		} else if node.IsConst() {
+			g.genConst(node)
+		} else if node.IsOp() {
+			g.genOp(node)
+		} else if node.IsId() {
+			g.genId(node)
+		} else if node.IsParam() {
+			g.genParam(node)
+		} else if node.IsVar() {
+			g.genVar(node)
+		}
+		g.gen(node.Sibling())
 	}
 }
 
