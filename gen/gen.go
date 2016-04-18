@@ -8,15 +8,23 @@ import (
 	"os"
 )
 
+const (
+	ofpFO  int = 0  // old frame pointer
+	retFO  int = -1 // return address
+	initFO int = -2 // param list
+)
+
+const (
+	pc  int = 7 // program counter
+	mp  int = 6 // memory pointer
+	gp  int = 5 // global pointer
+	ac1 int = 1 // accumlator
+	ac  int = 0 // accumlator
+)
+
 type Gen struct {
 	filename string
 	file     *os.File
-	pc       int
-	mp       int
-	gp       int
-	ac       int
-	ac1      int
-	tmp      int
 	loc      int
 	highLoc  int
 }
@@ -29,12 +37,6 @@ func NewGen(filename string) *Gen {
 	g := new(Gen)
 	g.filename = filename
 	g.file = file
-	g.pc = 7
-	g.mp = 6
-	g.gp = 5
-	g.ac = 0
-	g.ac1 = 1
-	g.tmp = 1
 	g.loc = 0
 	g.highLoc = 0
 	return g
@@ -58,14 +60,6 @@ func (g *Gen) emitRM(opcode string, target int, offset int, base int, comment st
 	out := fmt.Sprintf("%3d: %5s %d,%d(%d)\t* %s\n", g.loc, opcode, target, offset, base, comment)
 	g.emit(out)
 	g.loc = g.loc + 1
-	if g.highLoc < g.loc {
-		g.highLoc = g.loc
-	}
-}
-
-func (g *Gen) emitRMAbs(opcode string, target int, abs int, comment string) {
-	out := fmt.Sprintf("%3d: %5s %d,%d(%d)\t* %s\n", g.loc, opcode, target, abs-(g.loc+1), g.pc, comment)
-	g.emit(out)
 	if g.highLoc < g.loc {
 		g.highLoc = g.loc
 	}
@@ -99,87 +93,164 @@ func (g *Gen) emitRestore() {
 	g.loc = g.highLoc
 }
 
-func (g *Gen) load() {
-	g.emitComment("cminus compilation into tiny machine for " + g.filename)
-	g.emitComment("prelude beg")
-	g.emitRM("LD", g.gp, 0, g.ac, "load maxaddress from location 0")
-	g.emitRM("LDA", g.mp, 0, g.gp, "copy gp to mp")
-	g.emitRM("ST", g.ac, 0, g.ac, "clear location 0")
-	g.emitComment("prelude end")
-}
-
-func (g *Gen) halt() {
-	g.emitRO("HALT", 0, 0, 0, "halting program")
-}
-
 func (g *Gen) genCompound(node syntree.Node) {
-	log.CodeLog.Printf("=> compound %+v", node)
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		for n0 != nil {
+			log.CodeLog.Printf("%+v", n0)
+			if n0.IsVar() {
+				if n0.IsArray() {
+					log.CodeLog.Printf("+%d offset", n0.Value())
+				} else {
+					log.CodeLog.Printf("+1 offset")
+				}
+			}
+			n0 = n0.Sibling()
+		}
 	}
-	log.CodeLog.Printf("<= compound %+v", node)
+
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[1]
+		g.gen(n1)
+	}
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
-	log.CodeLog.Printf("=> function %+v", node)
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= function %+v", node)
+
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[1]
+		g.gen(n1)
+	}
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
-	log.CodeLog.Printf("=> iteration %+v %d", node, len(node.Children()))
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= iteration %+v", node)
+
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[1]
+		g.gen(n1)
+	}
 }
 
 func (g *Gen) genReturn(node syntree.Node) {
-	log.CodeLog.Printf("=> return %+v", node)
 	g.gen(node)
-	log.CodeLog.Printf("<= return %+v", node)
+	g.emitRM("LD", pc, retFO, mp, "return to caller")
 }
 
 func (g *Gen) genSelection(node syntree.Node) {
-	log.CodeLog.Printf("=> selection %+v (%d)", node, len(node.Children()))
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= selection %+v (%d)", node, len(node.Children()))
+
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[0]
+		g.gen(n1)
+	}
+
+	if len(node.Children()) > 2 {
+		n2 := node.Children()[0]
+		g.gen(n2)
+	}
 }
 
 func (g *Gen) genAssign(node syntree.Node) {
-	log.CodeLog.Printf("=> assign %+v", node)
-	for _, n := range node.Children() {
-		log.CodeLog.Printf("%+v", n)
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= assign %+v", node)
+
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[0]
+		g.gen(n1)
+	}
 }
 
 func (g *Gen) genCall(node syntree.Node) {
-	log.CodeLog.Printf("=> call %+v", node)
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= call %+v", node)
+	if node.Name() == "input" {
+		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
+	} else if node.Name() == "output" {
+		g.emitRM("LD", ac, 0, 0, "load into ac")
+		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
+	} else {
+		log.CodeLog.Printf("TODO %+v", node)
+	}
 }
 
 func (g *Gen) genConst(node syntree.Node) {
-	log.CodeLog.Printf("=> const %+v", node)
-	comment := fmt.Sprintf("load const with %d", node.Value())
-	g.emitRM("LDC", g.ac, node.Value(), 0, comment)
-	log.CodeLog.Printf("<= const %+v", node)
+	comment := fmt.Sprintf("load constant (%d) directly into ac", node.Value())
+	g.emitRM("LDC", ac, node.Value(), 0, comment)
 }
 
 func (g *Gen) genOp(node syntree.Node) {
-	log.CodeLog.Printf("=> op %+v", node)
-	for _, n := range node.Children() {
-		g.gen(n)
+	if len(node.Children()) > 0 {
+		n0 := node.Children()[0]
+		g.gen(n0)
 	}
-	log.CodeLog.Printf("<= op %+v", node)
+	if len(node.Children()) > 1 {
+		n1 := node.Children()[1]
+		g.gen(n1)
+	}
+
+	switch node.TokType() {
+	case syntree.PLUS:
+		g.emitRO("ADD", ac, ac1, ac, "op +")
+	case syntree.MINUS:
+		g.emitRO("SUB", ac, ac1, ac, "op -")
+	case syntree.TIMES:
+		g.emitRO("MUL", ac, ac1, ac, "op *")
+	case syntree.OVER:
+		g.emitRO("DIV", ac, ac1, ac, "op -")
+	case syntree.EQ:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JEQ", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	case syntree.NEQ:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JNE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	case syntree.LT:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JLT", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	case syntree.LTE:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JLE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	case syntree.GT:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JGT", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	case syntree.GTE:
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
+		g.emitRM("JGE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
+		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+	default:
+		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
+	}
 }
 
 func (g *Gen) genId(node syntree.Node) {
@@ -200,37 +271,42 @@ func (g *Gen) genId(node syntree.Node) {
 	}
 
 	if node.IsArray() {
-		log.CodeLog.Printf("=> id_arr %+v", node)
-		g.gen(node.Children()[0])
-		log.CodeLog.Printf("<= id_arr %+v", node)
+		if len(node.Children()) > 0 {
+			n0 := node.Children()[0]
+			g.gen(n0)
+		}
 	} else {
-		log.CodeLog.Printf("=> id %+v", node)
-		log.CodeLog.Printf("<= id %+v", node)
 	}
 }
 
 func (g *Gen) genParam(node syntree.Node) {
 	if node.IsArray() {
-		log.CodeLog.Printf("=> param_arr %+v", node)
-		log.CodeLog.Printf("<= param_arr %+v", node)
 	} else {
-		log.CodeLog.Printf("=> param %+v", node)
-		log.CodeLog.Printf("<= param %+v", node)
 	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
 	if node.IsArray() {
-		log.CodeLog.Printf("=> var_arr %+v", node)
-		log.CodeLog.Printf("<= var_arr %+v", node)
 	} else {
-		log.CodeLog.Printf("=> var %+v", node)
-		log.CodeLog.Printf("<= var %+v", node)
 	}
+}
+
+func (g *Gen) getPrelude() {
+	g.emitComment("cminus compilation into tiny machine for " + g.filename)
+	g.emitComment("prelude beg")
+	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
+	g.emitRM("LDA", mp, 0, gp, "copy global pointer into memory pointer")
+	g.emitRM("ST", ac, 0, ac, "clear location 0")
+	g.emitComment("prelude end")
+}
+
+func (g *Gen) getHalt() {
+	g.emitRO("HALT", 0, 0, 0, "halting program")
 }
 
 func (g *Gen) gen(node syntree.Node) {
 	if node != nil {
+		log.CodeLog.Printf("=> %+v", node)
 		if node.IsCompound() {
 			g.genCompound(node)
 		} else if node.IsFunc() {
@@ -256,6 +332,7 @@ func (g *Gen) gen(node syntree.Node) {
 		} else if node.IsVar() {
 			g.genVar(node)
 		}
+		log.CodeLog.Printf("<= %+v", node)
 		g.gen(node.Sibling())
 	}
 }
@@ -263,9 +340,9 @@ func (g *Gen) gen(node syntree.Node) {
 func Generate(node syntree.Node, filename string) {
 	g := NewGen(filename)
 	if g != nil {
-		g.load()
+		g.getPrelude()
 		g.gen(node)
-		g.halt()
+		g.getHalt()
 	} else {
 		log.ErrorLog.Printf(">>>>> Error opening %s", filename)
 	}
