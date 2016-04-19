@@ -89,10 +89,11 @@ var INNER_SCOPE string = "inner"
 var INNER_COUNT int = 0
 
 type SymTblLst struct {
-	scope    string
-	symTbl   SymTbl
-	parent   *SymTblLst
-	children []*SymTblLst
+	scope      string
+	baseMemLoc MemLoc
+	symTbl     SymTbl
+	parent     *SymTblLst
+	children   []*SymTblLst
 }
 
 type SymTblLstMap map[string]*SymTblLst
@@ -117,6 +118,7 @@ func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
 		INNER_COUNT++
 	}
 	s.scope = SCOPE_SEPARATOR + scope
+	s.baseMemLoc = MemLoc(0)
 	s.symTbl = *NewSymTbl()
 	s.parent = parent
 	s.children = nil
@@ -129,6 +131,14 @@ func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
 
 func (s SymTblLst) Scope() string {
 	return s.scope
+}
+
+func (s SymTblLst) BaseMemLoc() MemLoc {
+	return s.baseMemLoc
+}
+
+func (s *SymTblLst) IncBaseMemLoc() {
+	s.baseMemLoc++
 }
 
 func (s SymTblLst) SymTbl() SymTbl {

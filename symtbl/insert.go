@@ -5,8 +5,6 @@ import (
 	"github.com/bantl23/cminus/syntree"
 )
 
-var glbMemLoc MemLoc
-
 func InsertFuncInSymTbl(table *SymTblLst, node syntree.Node) {
 	log.AnalyzeLog.Printf("insert func: %+v %+v", table.Scope(), node)
 	if value, ok := table.SymTbl()[node.Name()]; ok {
@@ -18,8 +16,9 @@ func InsertFuncInSymTbl(table *SymTblLst, node syntree.Node) {
 		} else if node.ExpType() == syntree.INT_EXP_TYPE {
 			r = INT_RET_TYPE
 		}
-		table.SymTbl()[node.Name()] = NewSymTblVal(glbMemLoc, FUNC_SYM_TYPE, r, node.Pos().Row())
-		glbMemLoc.Inc()
+		memLoc := table.BaseMemLoc()
+		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, FUNC_SYM_TYPE, r, node.Pos().Row())
+		table.IncBaseMemLoc()
 
 		if len(node.Children()) > 0 {
 			n := node.Children()[0]
@@ -48,8 +47,9 @@ func InsertVarParamInSymTbl(table *SymTblLst, node syntree.Node) {
 		} else if node.IsInt() {
 			t = INT_SYM_TYPE
 		}
-		table.SymTbl()[node.Name()] = NewSymTblVal(glbMemLoc, t, UNK_RET_TYPE, node.Pos().Row())
-		glbMemLoc.Inc()
+		memLoc := table.BaseMemLoc()
+		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, t, UNK_RET_TYPE, node.Pos().Row())
+		table.IncBaseMemLoc()
 	}
 }
 

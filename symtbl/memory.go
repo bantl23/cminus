@@ -13,3 +13,7 @@ func (m *MemLoc) Reset() {
 func (m MemLoc) Get() int {
 	return int(m)
 }
+
+func (m *MemLoc) Set(memLoc MemLoc) {
+	*m = memLoc
+}
