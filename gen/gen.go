@@ -65,6 +65,15 @@ func (g *Gen) emitRM(opcode string, target int, offset int, base int, comment st
 	}
 }
 
+func (g *Gen) emitRMAbs(opcode string, target int, absolute int, comment string) {
+	out := fmt.Sprintf("%3d: %5s %d,%d(%d)\t* %s\n", g.loc, opcode, target, absolute-(g.loc+1), pc, comment)
+	g.emit(out)
+	g.loc = g.loc + 1
+	if g.highLoc < g.loc {
+		g.highLoc = g.loc
+	}
+}
+
 func (g *Gen) emitComment(comment string) {
 	out := fmt.Sprintf("* %s\n", comment)
 	g.emit(out)
@@ -94,96 +103,105 @@ func (g *Gen) emitRestore() {
 }
 
 func (g *Gen) genCompound(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		for n0 != nil {
-			log.CodeLog.Printf("%+v", n0)
-			if n0.IsVar() {
-				if n0.IsArray() {
-					log.CodeLog.Printf("+%d offset", n0.Value())
-				} else {
-					log.CodeLog.Printf("+1 offset")
-				}
+	// TODO
+	n0 := node.Children()[0]
+	n1 := node.Children()[1]
+
+	for n0 != nil {
+		log.CodeLog.Printf("%+v", n0)
+		if n0.IsVar() {
+			if n0.IsArray() {
+				log.CodeLog.Printf("+%d offset", n0.Value())
+			} else {
+				log.CodeLog.Printf("+1 offset")
 			}
-			n0 = n0.Sibling()
 		}
+		n0 = n0.Sibling()
 	}
 
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[1]
-		g.gen(n1)
-	}
+	g.gen(n1)
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
+	// TODO
+	n0 := node.Children()[0]
+	n1 := node.Children()[1]
 
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[1]
-		g.gen(n1)
-	}
+	g.gen(n0)
+	g.gen(n1)
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
+	n0 := node.Children()[0]
+	n1 := node.Children()[1]
 
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[1]
-		g.gen(n1)
-	}
+	sav0 := g.emitSkip(0)
+	g.emitComment("while: jump after body comes back here")
+	g.gen(n0)
+
+	sav1 := g.emitSkip(1)
+	g.emitComment("while: jump to end belongs here")
+	g.gen(n1)
+	g.emitRMAbs("LDA", pc, sav0, "while: jump back to body")
+
+	curr := g.emitSkip(0)
+	g.emitBackup(sav1)
+	g.emitRMAbs("JEQ", ac, curr, "while: jump to end")
+	g.emitRestore()
 }
 
 func (g *Gen) genReturn(node syntree.Node) {
-	g.gen(node)
+	n0 := node.Children()[0]
+	g.gen(n0)
 	g.emitRM("LD", pc, retFO, mp, "return to caller")
 }
 
 func (g *Gen) genSelection(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
+	n0 := node.Children()[0]
+	n1 := node.Children()[1]
+	n2 := node.Children()[2]
 
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[0]
-		g.gen(n1)
-	}
+	g.gen(n0)
+	sav0 := g.emitSkip(1)
+	g.emitComment("if: jump to else belongs here")
 
-	if len(node.Children()) > 2 {
-		n2 := node.Children()[0]
-		g.gen(n2)
-	}
+	g.gen(n1)
+	sav1 := g.emitSkip(1)
+	g.emitComment("if: jump to end belongs here")
+
+	curr := g.emitSkip(0)
+	g.emitBackup(sav0)
+	g.emitRMAbs("JEQ", ac, curr, "if: jump to else")
+	g.emitRestore()
+
+	g.gen(n2)
+	curr = g.emitSkip(0)
+	g.emitBackup(sav1)
+	g.emitRMAbs("LDA", pc, curr, "if: jump to end")
+	g.emitRestore()
 }
 
 func (g *Gen) genAssign(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
+	// TODO
+	n0 := node.Children()[0]
+	n1 := node.Children()[0]
 
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[0]
-		g.gen(n1)
-	}
+	g.gen(n0)
+	g.gen(n1)
 }
 
 func (g *Gen) genCall(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
+	n0 := node.Children()[0]
+	g.gen(n0)
+
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
 	} else if node.Name() == "output" {
+		// TODO
 		g.emitRM("LD", ac, 0, 0, "load into ac")
 		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
 	} else {
+		// TODO
 		log.CodeLog.Printf("TODO %+v", node)
 	}
 }
@@ -194,14 +212,13 @@ func (g *Gen) genConst(node syntree.Node) {
 }
 
 func (g *Gen) genOp(node syntree.Node) {
-	if len(node.Children()) > 0 {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	}
-	if len(node.Children()) > 1 {
-		n1 := node.Children()[1]
-		g.gen(n1)
-	}
+	n0 := node.Children()[0]
+	n1 := node.Children()[1]
+
+	g.gen(n0)
+	// TODO emit store
+	g.gen(n1)
+	// TODO emit load
 
 	switch node.TokType() {
 	case syntree.PLUS:
@@ -215,45 +232,46 @@ func (g *Gen) genOp(node syntree.Node) {
 	case syntree.EQ:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JEQ", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.NEQ:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JNE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LT:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JLT", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LTE:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JLE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GT:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JGT", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GTE:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JGE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, 0, "load constant 0 into ac (false)")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, 0, "load constant 1 into ac (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	default:
 		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
 	}
 }
 
 func (g *Gen) genId(node syntree.Node) {
+	// TODO
 	/*
 		comment := fmt.Sprintf("load %s with %d", node.Name(), node.Value())
 		if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
@@ -280,12 +298,14 @@ func (g *Gen) genId(node syntree.Node) {
 }
 
 func (g *Gen) genParam(node syntree.Node) {
+	// TODO
 	if node.IsArray() {
 	} else {
 	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
+	// TODO
 	if node.IsArray() {
 	} else {
 	}
