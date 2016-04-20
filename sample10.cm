@@ -1,13 +1,20 @@
-int i;
-
-void main(int a)
+void main(void)
 {
-  i = 1;
+  int i;
+  int j;
+  int k;
+  i = 6;
   output(i);
-  i = i + 1;
-  output(i);
-  i = 1 + i;
-  output(i);
-  i = 1 + 1;
-  output(i);
+  j = 2;
+  output(j);
+  k = 100;
+  output(k);
+  k = i * j;
+  output(k);
+  k = i / j;
+  output(k);
+  k = i + j;
+  output(k);
+  k = i - j;
+  output(k);
 }
