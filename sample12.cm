@@ -1,0 +1,25 @@
+void main(void)
+{
+  int i;
+  int j;
+  i = 1;
+  j = 2;
+  if (i != j)
+  {
+    output(1);
+  }
+
+  output(3);
+  output(4);
+
+  if (i != j)
+  {
+    output(5);
+  }
+  else
+  {
+    output(6);
+  }
+
+  output(7);
+}
