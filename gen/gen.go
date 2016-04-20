@@ -75,6 +75,14 @@ func (g *Gen) emitRMAbs(opcode string, target int, absolute int, comment string)
 	}
 }
 
+func (g *Gen) emitPush() {
+	g.emitRM("LDA", sp, -1, sp, "push stack")
+}
+
+func (g *Gen) emitPop() {
+	g.emitRM("LDA", sp, 1, sp, "pop stack")
+}
+
 func (g *Gen) emitComment(comment string) {
 	out := fmt.Sprintf("* %s\n", comment)
 	g.emit(out)
@@ -114,7 +122,8 @@ func (g *Gen) genCompound(node syntree.Node) {
 				if n0.IsArray() {
 					length = n0.Value()
 				}
-				g.emitRM("LDC", ac, length, 0, "load "+n0.Name()+" length into scratch")
+				g.emitRM("LDC", ac, length, 0, "load "+n0.Name()+" length into ac")
+				g.emitRO("SUB", sp, sp, 1, "push stack pointer")
 			}
 		}
 		n0 = n0.Sibling()
@@ -123,20 +132,18 @@ func (g *Gen) genCompound(node syntree.Node) {
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
-	g.emitComment("=> func: " + node.Name())
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	g.emitRM("ST", fp, 0, fp, "store frame pointer")
+	if node.Name() != "main" {
+		g.emitPush()
+	}
+	g.emitRM("ST", fp, 0, fp, "save fp to stack")
+	g.emitPush()
+	g.emitRM("ST", fp, 0, fp, "save cl to stack")
 
-	g.emitRM("ST", fp, 0, fp, "store control link")
-
-	g.emitComment("func: generate declaration here")
 	g.gen(n0)
-	g.emitComment("func: generate body here")
 	g.gen(n1)
-
-	g.emitComment("<= func: " + node.Name())
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
@@ -196,7 +203,6 @@ func (g *Gen) genAssign(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	// left hand of assign
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[n0.SymKey()].HasId(n0.Name()) {
 		memLoc = symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
@@ -205,14 +211,10 @@ func (g *Gen) genAssign(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
-	n0.SetLeft(true)
 	g.gen(n0)
-
-	// right hand of assign
-	n1.SetLeft(false)
 	g.gen(n1)
 
-	g.emitRM("ST", ac1, initFO-memLoc.Get(), fp, "store ac1 to id "+n0.Name())
+	g.emitRM("ST", ac, initFO-memLoc.Get(), fp, "store ac into id "+n0.Name())
 }
 
 func (g *Gen) genCall(node syntree.Node) {
@@ -223,7 +225,7 @@ func (g *Gen) genCall(node syntree.Node) {
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
 	} else if node.Name() == "output" {
-		g.emitRO("OUT", ac1, 0, 0, "write to stdout with ac1")
+		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
 	} else {
 		// TODO
 		log.CodeLog.Printf("TODO %+v", node)
@@ -231,77 +233,69 @@ func (g *Gen) genCall(node syntree.Node) {
 }
 
 func (g *Gen) genConst(node syntree.Node) {
-	scratch := ac1
-	if node.IsLeft() {
-		scratch = ac
-	}
-	comment := fmt.Sprintf("load constant (%d) directly into scratch", node.Value())
-	g.emitRM("LDC", scratch, node.Value(), 0, comment)
+	g.emitRM("LDC", ac, node.Value(), 0, "load constant directly into ac")
 }
 
 func (g *Gen) genOp(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	n0.SetLeft(true)
 	g.gen(n0)
+	g.emitPush()
+	g.emitRM("ST", ac, 0, sp, "storing left hand side of operator from ac")
 
-	n1.SetLeft(false)
 	g.gen(n1)
-
-	scratch := ac1
-	if node.IsLeft() {
-		scratch = ac
-	}
+	g.emitRM("LD", ac1, 0, sp, "loading left hand side of operator into ac1")
 
 	switch node.TokType() {
 	case syntree.PLUS:
-		g.emitRO("ADD", scratch, ac, ac1, "op + [ac = ac + ac1]")
+		g.emitRO("ADD", ac, ac1, ac, "op + [ac = ac1 + ac]")
 	case syntree.MINUS:
-		g.emitRO("SUB", scratch, ac, ac1, "op - [ac = ac - ac1]")
+		g.emitRO("SUB", ac, ac1, ac, "op - [ac = ac1 - ac]")
 	case syntree.TIMES:
-		g.emitRO("MUL", scratch, ac, ac1, "op * [ac = ac * ac1]")
+		g.emitRO("MUL", ac, ac1, ac, "op * [ac = ac1 * ac]")
 	case syntree.OVER:
-		g.emitRO("DIV", scratch, ac, ac1, "op - [ac = ac / ac1]")
+		g.emitRO("DIV", ac, ac1, ac, "op - [ac = ac1 / ac]")
 	case syntree.EQ:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JEQ", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JEQ", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.NEQ:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JNE", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JNE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LT:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JLT", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JLT", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LTE:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JLE", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JLE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GT:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JGT", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JGT", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GTE:
-		g.emitRO("SUB", scratch, ac, ac1, "op substract")
-		g.emitRM("JGE", scratch, 2, pc, "branch if true")
-		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
+		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRM("JGE", ac, 2, pc, "branch if true")
+		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
+		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	default:
 		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
 	}
+	g.emitRM("ST", ac, 0, sp, "storing addition result into ac")
 }
 
 func (g *Gen) genId(node syntree.Node) {
@@ -313,12 +307,7 @@ func (g *Gen) genId(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
-	scratch := ac1
-	if node.IsLeft() {
-		scratch = ac
-	}
-	comment := fmt.Sprintf("loading %s into scratch", node.Name())
-	g.emitRM("LD", scratch, initFO-memLoc.Get(), fp, comment)
+	g.emitRM("LD", ac, initFO-memLoc.Get(), fp, "store ac with id "+node.Name())
 }
 
 func (g *Gen) genParam(node syntree.Node) {
@@ -352,6 +341,7 @@ func (g *Gen) getPrelude() {
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
 	g.emitRM("LDA", fp, 0, gp, "copy global pointer into frame pointer")
+	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitComment("prelude end")
 }
