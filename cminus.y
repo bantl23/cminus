@@ -232,6 +232,7 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                       $$ = syntree.NewStmtSelectionNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
+                                                      $$.AddChild(nil)
                                                       log.ParseLog.Printf("selection_stmt0: %+v\n", $$)
 																										}
                     | IF LPAREN expression RPAREN statement ELSE statement
