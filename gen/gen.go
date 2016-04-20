@@ -262,37 +262,37 @@ func (g *Gen) genOp(node syntree.Node) {
 	case syntree.OVER:
 		g.emitRO("DIV", ac, ac1, ac, "op - [ac = ac1 / ac]")
 	case syntree.EQ:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JEQ", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
 		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.NEQ:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JNE", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
 		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LT:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JLT", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
 		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.LTE:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JLE", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
 		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GT:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JGT", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
 		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
 	case syntree.GTE:
-		g.emitRO("SUB", ac, ac, ac1, "op substract")
+		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JGE", ac, 2, pc, "branch if true")
 		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")

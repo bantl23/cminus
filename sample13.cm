@@ -1,0 +1,9 @@
+void main(void)
+{
+  while (5 != 6)
+  {
+    output(1);
+  }
+
+  output(5);
+}
