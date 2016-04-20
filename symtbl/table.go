@@ -143,8 +143,8 @@ func (s SymTblLst) BaseMemLoc() MemLoc {
 	return s.baseMemLoc
 }
 
-func (s *SymTblLst) IncBaseMemLoc() {
-	s.baseMemLoc++
+func (s *SymTblLst) IncBaseMemLoc(size int) {
+	s.baseMemLoc = MemLoc(int(s.baseMemLoc) + size)
 }
 
 func (s SymTblLst) SymTbl() SymTbl {
