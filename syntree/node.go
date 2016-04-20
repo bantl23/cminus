@@ -29,6 +29,8 @@ type Node interface {
 	IsAssign() bool
 	IsSelection() bool
 	IsIteration() bool
+	IsLeft() bool
+	SetLeft(isLeft bool)
 	ExpType() ExpressionType
 	TokType() TokenType
 	SymKey() string
@@ -40,6 +42,7 @@ type NodeBase struct {
 	sibling   Node
 	children  []Node
 	symbolKey string
+	left      bool
 }
 
 func (n NodeBase) Pos() Position {
@@ -144,6 +147,14 @@ func (n NodeBase) IsSelection() bool {
 
 func (n NodeBase) IsIteration() bool {
 	return false
+}
+
+func (n NodeBase) IsLeft() bool {
+	return n.left
+}
+
+func (n *NodeBase) SetLeft(isLeft bool) {
+	n.left = isLeft
 }
 
 func (n NodeBase) SymKey() string {

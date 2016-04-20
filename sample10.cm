@@ -1,6 +1,7 @@
+int i;
+
 void main(int a)
 {
-  int i;
   i = 1;
   output(i);
   i = i + 1;

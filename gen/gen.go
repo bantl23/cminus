@@ -16,8 +16,10 @@ const (
 
 const (
 	pc  int = 7 // program counter
-	mp  int = 6 // memory pointer
-	gp  int = 5 // global pointer
+	gp  int = 6 // global pointer
+	fp  int = 5 // frame pointer
+	cl  int = 4 // control link
+	sp  int = 3 // stack pointer
 	ac1 int = 1 // accumlator
 	ac  int = 0 // accumlator
 )
@@ -103,32 +105,42 @@ func (g *Gen) emitRestore() {
 }
 
 func (g *Gen) genCompound(node syntree.Node) {
-	// TODO
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
 	for n0 != nil {
-		log.CodeLog.Printf("%+v", n0)
 		if n0.IsVar() {
-			if n0.IsArray() {
-				log.CodeLog.Printf("+%d offset", n0.Value())
-			} else {
-				log.CodeLog.Printf("+1 offset")
+			if n0.ExpType() == syntree.INT_EXP_TYPE {
+				length := 1
+				if n0.IsArray() {
+					length = n0.Value()
+				}
+				g.emitRM("LDC", ac, length, 0, "load "+n0.Name()+" length into scratch")
+				g.emitRO("SUB", sp, sp, ac, "move stack pointer for var "+n0.Name())
 			}
 		}
 		n0 = n0.Sibling()
 	}
-
 	g.gen(n1)
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
-	// TODO
+	g.emitComment("=> func: " + node.Name())
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
+	g.emitRM("ST", fp, 0, fp, "store frame pointer")
+	g.emitRO("SUB", sp, sp, ac, "move stack pointer for frame pointer")
+
+	g.emitRM("ST", fp, 0, fp, "store control link")
+	g.emitRO("SUB", sp, sp, ac, "move stack pointer for control link")
+
+	g.emitComment("func: generate declaration here")
 	g.gen(n0)
+	g.emitComment("func: generate body here")
 	g.gen(n1)
+
+	g.emitComment("<= func: " + node.Name())
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
@@ -151,9 +163,10 @@ func (g *Gen) genIteration(node syntree.Node) {
 }
 
 func (g *Gen) genReturn(node syntree.Node) {
+	//TODO
 	n0 := node.Children()[0]
 	g.gen(n0)
-	g.emitRM("LD", pc, retFO, mp, "return to caller")
+	//g.emitRM("LD", pc, retFO, mp, "return to caller")
 }
 
 func (g *Gen) genSelection(node syntree.Node) {
@@ -182,23 +195,34 @@ func (g *Gen) genSelection(node syntree.Node) {
 }
 
 func (g *Gen) genAssign(node syntree.Node) {
-	// TODO
 	n0 := node.Children()[0]
-	n1 := node.Children()[0]
+	n1 := node.Children()[1]
 
-	g.gen(n0)
+	// left hand of assign
+	memLoc := symtbl.MemLoc(0)
+	if symtbl.GlbSymTblMap[n0.SymKey()].HasId(n0.Name()) {
+		memLoc := symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
+		// TODO array
+		log.CodeLog.Printf("found %s at %+v offset from fp", n0.Name(), memLoc)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
+
+	// right hand of assign
+	n1.SetLeft(false)
 	g.gen(n1)
+
+	g.emitRM("ST", ac1, memLoc.Get()-2, fp, "store ac to id "+n0.Name())
 }
 
 func (g *Gen) genCall(node syntree.Node) {
 	n0 := node.Children()[0]
+	log.CodeLog.Printf("%+v", n0)
 	g.gen(n0)
 
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
 	} else if node.Name() == "output" {
-		// TODO
-		g.emitRM("LD", ac, 0, 0, "load into ac")
 		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
 	} else {
 		// TODO
@@ -207,8 +231,13 @@ func (g *Gen) genCall(node syntree.Node) {
 }
 
 func (g *Gen) genConst(node syntree.Node) {
-	comment := fmt.Sprintf("load constant (%d) directly into ac", node.Value())
-	g.emitRM("LDC", ac, node.Value(), 0, comment)
+	if node.IsLeft() {
+		comment := fmt.Sprintf("load constant (%d) directly into ac", node.Value())
+		g.emitRM("LDC", ac, node.Value(), 0, comment)
+	} else {
+		comment := fmt.Sprintf("load constant (%d) directly into ac1", node.Value())
+		g.emitRM("LDC", ac1, node.Value(), 0, comment)
+	}
 }
 
 func (g *Gen) genOp(node syntree.Node) {
@@ -222,13 +251,13 @@ func (g *Gen) genOp(node syntree.Node) {
 
 	switch node.TokType() {
 	case syntree.PLUS:
-		g.emitRO("ADD", ac, ac1, ac, "op +")
+		g.emitRO("ADD", ac, ac1, ac, "op + [ac = ac1 + ac]")
 	case syntree.MINUS:
-		g.emitRO("SUB", ac, ac1, ac, "op -")
+		g.emitRO("SUB", ac, ac1, ac, "op - [ac = ac1 - ac]")
 	case syntree.TIMES:
-		g.emitRO("MUL", ac, ac1, ac, "op *")
+		g.emitRO("MUL", ac, ac1, ac, "op * [ac = ac1 * ac]")
 	case syntree.OVER:
-		g.emitRO("DIV", ac, ac1, ac, "op -")
+		g.emitRO("DIV", ac, ac1, ac, "op - [ac = ac1 / ac]")
 	case syntree.EQ:
 		g.emitRO("SUB", ac, ac1, ac, "op substract")
 		g.emitRM("JEQ", ac, 2, pc, "branch if true")
@@ -271,43 +300,52 @@ func (g *Gen) genOp(node syntree.Node) {
 }
 
 func (g *Gen) genId(node syntree.Node) {
-	// TODO
-	/*
-		comment := fmt.Sprintf("load %s with %d", node.Name(), node.Value())
-		if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
-			memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-			g.emitRM("LD", g.ac, int(memLoc), g.gp, comment)
-		} else {
-			log.ErrorLog.Printf(">>>>> Error %s not found.", node.Name())
-		}
-	*/
-
-	log.CodeLog.Printf("searching for %s", node.Name())
+	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
 		memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s %+v", node.Name(), memLoc)
+		log.CodeLog.Printf("found %s at %+v offset from fp", node.Name(), memLoc)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
 	}
 
 	if node.IsArray() {
-		if len(node.Children()) > 0 {
-			n0 := node.Children()[0]
-			g.gen(n0)
-		}
+		n0 := node.Children()[0]
+		g.gen(n0)
 	} else {
+		if node.IsLeft() {
+			comment := fmt.Sprintf("loading %s into ac", node.Name())
+			g.emitRM("LD", ac, memLoc.Get()-2, fp, comment)
+		} else {
+			comment := fmt.Sprintf("loading %s into ac", node.Name())
+			g.emitRM("LD", ac1, memLoc.Get()-2, fp, comment)
+		}
 	}
 }
 
 func (g *Gen) genParam(node syntree.Node) {
-	// TODO
-	if node.IsArray() {
-	} else {
+	if node.ExpType() == syntree.INT_EXP_TYPE {
+		length := 1
+		if node.IsArray() {
+			length = node.Value()
+		}
+		if length != 0 {
+			g.emitRM("LDC", ac, length, 0, "load "+node.Name()+" length into scratch")
+			g.emitRO("SUB", sp, sp, ac, "move stack pointer to allocate space for param "+node.Name())
+		} else {
+			// TODO
+			log.CodeLog.Printf("assign a reference")
+		}
 	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
-	// TODO
-	if node.IsArray() {
-	} else {
+	if node.ExpType() == syntree.INT_EXP_TYPE {
+		length := 1
+		if node.IsArray() {
+			length = node.Value()
+		}
+		g.emitRM("LDC", ac, length, 0, "load "+node.Name()+" length into scratch")
+		g.emitRO("SUB", fp, fp, ac, "move frame pointer to allocate space for var "+node.Name())
 	}
 }
 
@@ -315,7 +353,8 @@ func (g *Gen) getPrelude() {
 	g.emitComment("cminus compilation into tiny machine for " + g.filename)
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
-	g.emitRM("LDA", mp, 0, gp, "copy global pointer into memory pointer")
+	g.emitRM("LDA", fp, 0, gp, "copy global pointer into frame pointer")
+	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitComment("prelude end")
 }
