@@ -18,8 +18,7 @@ const (
 	pc  int = 7 // program counter
 	gp  int = 6 // global pointer
 	fp  int = 5 // frame pointer
-	cl  int = 4 // control link
-	sp  int = 3 // stack pointer
+	sp  int = 4 // stack pointer
 	ac1 int = 1 // accumlator
 	ac  int = 0 // accumlator
 )
@@ -116,7 +115,6 @@ func (g *Gen) genCompound(node syntree.Node) {
 					length = n0.Value()
 				}
 				g.emitRM("LDC", ac, length, 0, "load "+n0.Name()+" length into scratch")
-				g.emitRO("SUB", sp, sp, ac, "move stack pointer for var "+n0.Name())
 			}
 		}
 		n0 = n0.Sibling()
@@ -130,10 +128,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 	n1 := node.Children()[1]
 
 	g.emitRM("ST", fp, 0, fp, "store frame pointer")
-	g.emitRO("SUB", sp, sp, ac, "move stack pointer for frame pointer")
 
 	g.emitRM("ST", fp, 0, fp, "store control link")
-	g.emitRO("SUB", sp, sp, ac, "move stack pointer for control link")
 
 	g.emitComment("func: generate declaration here")
 	g.gen(n0)
@@ -172,7 +168,6 @@ func (g *Gen) genReturn(node syntree.Node) {
 func (g *Gen) genSelection(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
-	n2 := node.Children()[2]
 
 	g.gen(n0)
 	sav0 := g.emitSkip(1)
@@ -187,11 +182,14 @@ func (g *Gen) genSelection(node syntree.Node) {
 	g.emitRMAbs("JEQ", ac, curr, "if: jump to else")
 	g.emitRestore()
 
-	g.gen(n2)
-	curr = g.emitSkip(0)
-	g.emitBackup(sav1)
-	g.emitRMAbs("LDA", pc, curr, "if: jump to end")
-	g.emitRestore()
+	if len(node.Children()) == 3 {
+		n2 := node.Children()[2]
+		g.gen(n2)
+		curr = g.emitSkip(0)
+		g.emitBackup(sav1)
+		g.emitRMAbs("LDA", pc, curr, "if: jump to end")
+		g.emitRestore()
+	}
 }
 
 func (g *Gen) genAssign(node syntree.Node) {
@@ -201,18 +199,20 @@ func (g *Gen) genAssign(node syntree.Node) {
 	// left hand of assign
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[n0.SymKey()].HasId(n0.Name()) {
-		memLoc := symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
-		// TODO array
+		memLoc = symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
 		log.CodeLog.Printf("found %s at %+v offset from fp", n0.Name(), memLoc)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
+	n0.SetLeft(true)
+	g.gen(n0)
+
 	// right hand of assign
 	n1.SetLeft(false)
 	g.gen(n1)
 
-	g.emitRM("ST", ac1, memLoc.Get()-2, fp, "store ac to id "+n0.Name())
+	g.emitRM("ST", ac1, initFO-memLoc.Get(), fp, "store ac1 to id "+n0.Name())
 }
 
 func (g *Gen) genCall(node syntree.Node) {
@@ -223,7 +223,7 @@ func (g *Gen) genCall(node syntree.Node) {
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
 	} else if node.Name() == "output" {
-		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
+		g.emitRO("OUT", ac1, 0, 0, "write to stdout with ac1")
 	} else {
 		// TODO
 		log.CodeLog.Printf("TODO %+v", node)
@@ -231,69 +231,74 @@ func (g *Gen) genCall(node syntree.Node) {
 }
 
 func (g *Gen) genConst(node syntree.Node) {
+	scratch := ac1
 	if node.IsLeft() {
-		comment := fmt.Sprintf("load constant (%d) directly into ac", node.Value())
-		g.emitRM("LDC", ac, node.Value(), 0, comment)
-	} else {
-		comment := fmt.Sprintf("load constant (%d) directly into ac1", node.Value())
-		g.emitRM("LDC", ac1, node.Value(), 0, comment)
+		scratch = ac
 	}
+	comment := fmt.Sprintf("load constant (%d) directly into scratch", node.Value())
+	g.emitRM("LDC", scratch, node.Value(), 0, comment)
 }
 
 func (g *Gen) genOp(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
+	n0.SetLeft(true)
 	g.gen(n0)
-	// TODO emit store
+
+	n1.SetLeft(false)
 	g.gen(n1)
-	// TODO emit load
+
+	scratch := ac1
+	if node.IsLeft() {
+		scratch = ac
+	}
 
 	switch node.TokType() {
 	case syntree.PLUS:
-		g.emitRO("ADD", ac, ac1, ac, "op + [ac = ac1 + ac]")
+		g.emitRO("ADD", scratch, ac, ac1, "op + [ac = ac + ac1]")
 	case syntree.MINUS:
-		g.emitRO("SUB", ac, ac1, ac, "op - [ac = ac1 - ac]")
+		g.emitRO("SUB", scratch, ac, ac1, "op - [ac = ac - ac1]")
 	case syntree.TIMES:
-		g.emitRO("MUL", ac, ac1, ac, "op * [ac = ac1 * ac]")
+		g.emitRO("MUL", scratch, ac, ac1, "op * [ac = ac * ac1]")
 	case syntree.OVER:
-		g.emitRO("DIV", ac, ac1, ac, "op - [ac = ac1 / ac]")
+		g.emitRO("DIV", scratch, ac, ac1, "op - [ac = ac / ac1]")
 	case syntree.EQ:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JEQ", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JEQ", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	case syntree.NEQ:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JNE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JNE", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	case syntree.LT:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JLT", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JLT", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	case syntree.LTE:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JLE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JLE", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	case syntree.GT:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JGT", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JGT", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	case syntree.GTE:
-		g.emitRO("SUB", ac, ac1, ac, "op substract")
-		g.emitRM("JGE", ac, 2, pc, "branch if true")
-		g.emitRM("LDC", ac, 0, ac, "load constant 0 into ac (false)")
+		g.emitRO("SUB", scratch, ac, ac1, "op substract")
+		g.emitRM("JGE", scratch, 2, pc, "branch if true")
+		g.emitRM("LDC", scratch, 0, scratch, "load constant 0 into scratch (false)")
 		g.emitRM("LDA", pc, 1, pc, "unconditional jump 1")
-		g.emitRM("LDC", ac, 1, ac, "load constant 1 into ac (true)")
+		g.emitRM("LDC", scratch, 1, scratch, "load constant 1 into scratch (true)")
 	default:
 		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
 	}
@@ -302,24 +307,18 @@ func (g *Gen) genOp(node syntree.Node) {
 func (g *Gen) genId(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
-		memLoc := symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+		memLoc = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
 		log.CodeLog.Printf("found %s at %+v offset from fp", node.Name(), memLoc)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
-	if node.IsArray() {
-		n0 := node.Children()[0]
-		g.gen(n0)
-	} else {
-		if node.IsLeft() {
-			comment := fmt.Sprintf("loading %s into ac", node.Name())
-			g.emitRM("LD", ac, memLoc.Get()-2, fp, comment)
-		} else {
-			comment := fmt.Sprintf("loading %s into ac", node.Name())
-			g.emitRM("LD", ac1, memLoc.Get()-2, fp, comment)
-		}
+	scratch := ac1
+	if node.IsLeft() {
+		scratch = ac
 	}
+	comment := fmt.Sprintf("loading %s into scratch", node.Name())
+	g.emitRM("LD", scratch, initFO-memLoc.Get(), fp, comment)
 }
 
 func (g *Gen) genParam(node syntree.Node) {
@@ -330,7 +329,6 @@ func (g *Gen) genParam(node syntree.Node) {
 		}
 		if length != 0 {
 			g.emitRM("LDC", ac, length, 0, "load "+node.Name()+" length into scratch")
-			g.emitRO("SUB", sp, sp, ac, "move stack pointer to allocate space for param "+node.Name())
 		} else {
 			// TODO
 			log.CodeLog.Printf("assign a reference")
@@ -354,7 +352,6 @@ func (g *Gen) getPrelude() {
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
 	g.emitRM("LDA", fp, 0, gp, "copy global pointer into frame pointer")
-	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitComment("prelude end")
 }
