@@ -1,0 +1,21 @@
+void main(void)
+{
+  if (1 != 2)
+  {
+    output(1);
+  }
+
+  output(3);
+  output(4);
+
+  if (1 != 2)
+  {
+    output(5);
+  }
+  else
+  {
+    output(6);
+  }
+
+  output(7);
+}
