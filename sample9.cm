@@ -1,16 +1,12 @@
-void main(int a)
+void main(void)
 {
   int i;
-  int j;
-  i = 1;
+  i = 5 + 3;
   output(i);
-  j = 2;
-  output(j);
-  i = i + 10;
+  i = 5 - 3;
   output(i);
-  i = 10 + i;
+  i = 12 / 3;
   output(i);
-  i = 10 + 1;
+  i = 5 * 5;
   output(i);
-  output(j);
 }

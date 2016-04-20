@@ -79,6 +79,10 @@ func (g *Gen) emitPush() {
 	g.emitRM("LDA", sp, -1, sp, "push stack")
 }
 
+func (g *Gen) emitPushSize(size int) {
+	g.emitRM("LDA", sp, -1*size, sp, "push stack")
+}
+
 func (g *Gen) emitPop() {
 	g.emitRM("LDA", sp, 1, sp, "pop stack")
 }
@@ -246,6 +250,7 @@ func (g *Gen) genOp(node syntree.Node) {
 
 	g.gen(n1)
 	g.emitRM("LD", ac1, 0, sp, "loading left hand side of operator into ac1")
+	g.emitPop()
 
 	switch node.TokType() {
 	case syntree.PLUS:
@@ -295,7 +300,7 @@ func (g *Gen) genOp(node syntree.Node) {
 	default:
 		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
 	}
-	g.emitRM("ST", ac, 0, sp, "storing addition result into ac")
+	g.emitRM("ST", ac, 0, sp, "storing operation result into ac")
 }
 
 func (g *Gen) genId(node syntree.Node) {
@@ -311,28 +316,18 @@ func (g *Gen) genId(node syntree.Node) {
 }
 
 func (g *Gen) genParam(node syntree.Node) {
+	// TODO array
 	if node.ExpType() == syntree.INT_EXP_TYPE {
-		length := 1
-		if node.IsArray() {
-			length = node.Value()
-		}
-		if length != 0 {
-			g.emitRM("LDC", ac, length, 0, "load "+node.Name()+" length into scratch")
-		} else {
-			// TODO
-			log.CodeLog.Printf("assign a reference")
-		}
+		g.emitComment("pushing " + node.Name() + " param into stack")
+		g.emitPush()
 	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
+	// TODO array
 	if node.ExpType() == syntree.INT_EXP_TYPE {
-		length := 1
-		if node.IsArray() {
-			length = node.Value()
-		}
-		g.emitRM("LDC", ac, length, 0, "load "+node.Name()+" length into scratch")
-		g.emitRO("SUB", fp, fp, ac, "move frame pointer to allocate space for var "+node.Name())
+		g.emitComment("pushing " + node.Name() + " var into stack")
+		g.emitPush()
 	}
 }
 
