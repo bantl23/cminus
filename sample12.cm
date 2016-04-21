@@ -37,6 +37,11 @@ void main(void)
   {
     output(10);
   }
+  
+  if (j > i)
+  {
+    output(100);
+  }
 
   if (i < j)
   {
@@ -46,5 +51,9 @@ void main(void)
   if (j > i)
   {
     output(12);
+  }
+  else
+  {
+    output(13);
   }
 }

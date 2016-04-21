@@ -1,8 +1,11 @@
 void main(void)
 {
-  while (5 < 6)
+  int i;
+  i = 0;
+  while (i < 5)
   {
-    output(1);
+    output(i);
+    i = i + 1;
   }
 
   output(5);
