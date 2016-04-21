@@ -2,10 +2,11 @@ package gen
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/bantl23/cminus/log"
 	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
-	"os"
 )
 
 const (
@@ -75,16 +76,22 @@ func (g *Gen) emitRMAbs(opcode string, target int, absolute int, comment string)
 	}
 }
 
-func (g *Gen) emitPush() {
-	g.emitRM("LDA", sp, -1, sp, "push stack")
+func (g *Gen) emitPushSize(size int) {
+	comment := fmt.Sprintf("push stack (%d)", size)
+	g.emitRM("LDA", sp, -1*size, sp, comment)
 }
 
-func (g *Gen) emitPushSize(size int) {
-	g.emitRM("LDA", sp, -1*size, sp, "push stack")
+func (g *Gen) emitPush() {
+	g.emitPushSize(1)
+}
+
+func (g *Gen) emitPopSize(size int) {
+	comment := fmt.Sprintf("pop stack (%d)", size)
+	g.emitRM("LDA", sp, 1*size, sp, comment)
 }
 
 func (g *Gen) emitPop() {
-	g.emitRM("LDA", sp, 1, sp, "pop stack")
+	g.emitPushSize(1)
 }
 
 func (g *Gen) emitComment(comment string) {
@@ -122,12 +129,12 @@ func (g *Gen) genCompound(node syntree.Node) {
 	for n0 != nil {
 		if n0.IsVar() {
 			if n0.ExpType() == syntree.INT_EXP_TYPE {
-				length := 1
+				size := 1
 				if n0.IsArray() {
-					length = n0.Value()
+					size = n0.Value()
 				}
-				g.emitRM("LDC", ac, length, 0, "load "+n0.Name()+" length into ac")
-				g.emitRO("SUB", sp, sp, 1, "push stack pointer")
+				g.emitRM("LDC", ac, size, 0, "load "+n0.Name()+" length into ac")
+				g.emitPushSize(size)
 			}
 		}
 		n0 = n0.Sibling()
@@ -218,7 +225,20 @@ func (g *Gen) genAssign(node syntree.Node) {
 	g.gen(n0)
 	g.gen(n1)
 
-	g.emitRM("ST", ac, initFO-memLoc.Get(), fp, "store ac into id "+n0.Name())
+	if n0.IsArray() {
+		g.emitPush()
+		g.emitRM("ST", ac, 0, sp, "storing value of array")
+		nidx := n0.Children()[0]
+		g.gen(nidx)
+		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
+		g.emitRO("SUB", ac, ac1, ac, "get array offset")
+		g.emitRO("ADD", ac, fp, ac, "get array memory location")
+		g.emitRM("LD", ac1, 0, sp, "loading value of arra")
+		g.emitPop()
+		g.emitRM("ST", ac1, 0, ac, "load value into ac")
+	} else {
+		g.emitRM("ST", ac, initFO-memLoc.Get(), fp, "store ac into id "+n0.Name())
+	}
 }
 
 func (g *Gen) genCall(node syntree.Node) {
@@ -312,22 +332,39 @@ func (g *Gen) genId(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
-	g.emitRM("LD", ac, initFO-memLoc.Get(), fp, "store ac with id "+node.Name())
+	if node.IsArray() {
+		n0 := node.Children()[0]
+		g.gen(n0)
+		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
+		g.emitRO("SUB", ac, ac1, ac, "get array offset")
+		g.emitRO("ADD", ac, fp, ac, "get array memory location")
+		g.emitRM("LD", ac, 0, ac, "load value into ac")
+	} else {
+		g.emitRM("LD", ac, initFO-memLoc.Get(), fp, "store ac with id "+node.Name())
+	}
 }
 
 func (g *Gen) genParam(node syntree.Node) {
-	// TODO array
 	if node.ExpType() == syntree.INT_EXP_TYPE {
+		size := 1
+		if node.IsArray() {
+			if node.IsArray() {
+				size = node.Value()
+			}
+		}
 		g.emitComment("pushing " + node.Name() + " param into stack")
-		g.emitPush()
+		g.emitPushSize(size)
 	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
-	// TODO array
 	if node.ExpType() == syntree.INT_EXP_TYPE {
+		size := 1
+		if node.IsArray() {
+			size = node.Value()
+		}
 		g.emitComment("pushing " + node.Name() + " var into stack")
-		g.emitPush()
+		g.emitPushSize(size)
 	}
 }
 
