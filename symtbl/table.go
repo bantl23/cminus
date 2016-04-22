@@ -93,6 +93,7 @@ var SCOPE_SEPARATOR string = "$"
 var ROOT_SCOPE string = "global"
 var INNER_SCOPE string = "inner"
 var INNER_COUNT int = 0
+var ROOT_KEY string = SCOPE_SEPARATOR + ROOT_SCOPE
 
 type SymTblLst struct {
 	scope      string

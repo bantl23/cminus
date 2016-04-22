@@ -143,18 +143,40 @@ func (g *Gen) genCompound(node syntree.Node) {
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
+	memLoc := symtbl.MemLoc(0)
+	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
+		memLoc = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
+		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
+		pc := g.emitSkip(0) + 3
+		g.emitRM("LDC", ac1, pc, 0, "save pc into ac1")
+		g.emitRM("ST", ac1, 0-memLoc.Get(), gp, "saving ac1 for "+node.Name())
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
+
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	if node.Name() != "main" {
-		g.emitPush()
-	}
-	g.emitRM("ST", fp, 0, fp, "save fp to stack")
-	g.emitPush()
-	g.emitRM("ST", fp, 0, fp, "save cl to stack")
+	//g.emitPush()
+	//g.emitRM("ST", fp, 0, fp, "save fp to stack")
+	//g.emitPush()
+	//g.emitRM("ST", fp, 0, fp, "save cl to stack")
+
+	sav0 := g.emitSkip(1)
 
 	g.gen(n0)
 	g.gen(n1)
+
+	if node.Name() == "main" {
+		halt := g.emitSkip(0) + 2
+		g.emitRM("LDA", pc, halt, 0, "func: jump to halt")
+	}
+
+	sav1 := g.emitSkip(0)
+
+	g.emitBackup(sav0)
+	g.emitRM("LDA", pc, sav1, 0, "func: jump to end")
+	g.emitRestore()
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
@@ -243,7 +265,6 @@ func (g *Gen) genAssign(node syntree.Node) {
 
 func (g *Gen) genCall(node syntree.Node) {
 	n0 := node.Children()[0]
-	log.CodeLog.Printf("%+v", n0)
 	g.gen(n0)
 
 	if node.Name() == "input" {
@@ -368,7 +389,7 @@ func (g *Gen) genVar(node syntree.Node) {
 	}
 }
 
-func (g *Gen) getPrelude() {
+func (g *Gen) genPrelude() {
 	g.emitComment("cminus compilation into tiny machine for " + g.filename)
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
@@ -376,6 +397,28 @@ func (g *Gen) getPrelude() {
 	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitComment("prelude end")
+}
+
+func (g *Gen) genGlobals() {
+	g.emitComment("global space beg")
+	glbs := symtbl.GlbSymTblMap[symtbl.ROOT_KEY].SymTbl()
+	for k, _ := range glbs {
+		g.emitPush()
+		g.emitComment("added " + k + " to global space")
+	}
+	g.emitComment("global space end")
+}
+
+func (g *Gen) genMain() {
+	memLoc := symtbl.MemLoc(0)
+	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId("main") {
+		memLoc = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc("main")
+		log.CodeLog.Printf("found main at %+v offset from gp", memLoc)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
+
+	g.emitRM("LD", pc, 0-memLoc.Get(), gp, "jumping to main")
 }
 
 func (g *Gen) getHalt() {
@@ -418,8 +461,10 @@ func (g *Gen) gen(node syntree.Node) {
 func Generate(node syntree.Node, filename string) {
 	g := NewGen(filename)
 	if g != nil {
-		g.getPrelude()
+		g.genPrelude()
+		g.genGlobals()
 		g.gen(node)
+		g.genMain()
 		g.getHalt()
 	} else {
 		log.ErrorLog.Printf(">>>>> Error opening %s", filename)
