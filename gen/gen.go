@@ -147,9 +147,6 @@ func (g *Gen) genFunction(node syntree.Node) {
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
 		memLoc = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
 		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
-		pc := g.emitSkip(0) + 3
-		g.emitRM("LDC", ac1, pc, 0, "save pc into ac1")
-		g.emitRM("ST", ac1, 0-memLoc.Get(), gp, "saving ac1 for "+node.Name())
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -157,12 +154,14 @@ func (g *Gen) genFunction(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	//g.emitPush()
-	//g.emitRM("ST", fp, 0, fp, "save fp to stack")
-	//g.emitPush()
-	//g.emitRM("ST", fp, 0, fp, "save cl to stack")
+	sav0 := g.emitSkip(3)
 
-	sav0 := g.emitSkip(1)
+	g.emitRO("ADD", ac1, fp, 0, "save fp into ac1 for storing")
+	g.emitRO("ADD", fp, sp, 0, "load fp with current sp")
+	g.emitPush()
+	g.emitRM("ST", fp, 0, sp, "save fp into stack")
+	g.emitPush()
+	g.emitRM("ST", ac1, 0, sp, "save cl to stack")
 
 	g.gen(n0)
 	g.gen(n1)
@@ -175,8 +174,11 @@ func (g *Gen) genFunction(node syntree.Node) {
 	sav1 := g.emitSkip(0)
 
 	g.emitBackup(sav0)
+	g.emitRM("LDC", ac1, sav0+3, 0, "save pc into ac1 for "+node.Name())
+	g.emitRM("ST", ac1, 0-memLoc.Get(), gp, "saving ac1 for "+node.Name())
 	g.emitRM("LDA", pc, sav1, 0, "func: jump to end")
 	g.emitRestore()
+
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
@@ -255,7 +257,7 @@ func (g *Gen) genAssign(node syntree.Node) {
 		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
 		g.emitRO("ADD", ac, fp, ac, "get array memory location")
-		g.emitRM("LD", ac1, 0, sp, "loading value of arra")
+		g.emitRM("LD", ac1, 0, sp, "loading value of array")
 		g.emitPop()
 		g.emitRM("ST", ac1, 0, ac, "load value into ac")
 	} else {
