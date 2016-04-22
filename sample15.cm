@@ -8,5 +8,9 @@ void main(void)
   {
     output(1);
   }
+  else
+  {
+    output(2);
+  }
   output(5);
 }
