@@ -3,6 +3,7 @@ package symtbl
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type SymTblVal struct {
@@ -181,17 +182,20 @@ func (s *SymTblLst) HasId(variable string) bool {
 	return has
 }
 
-func (s *SymTblLst) GetMemLoc(variable string) MemLoc {
+func (s *SymTblLst) GetMemLoc(variable string) (MemLoc, int) {
 	memLoc := MemLoc(-1)
 	lst := s
+	depth := 0
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
 			memLoc = val.MemLoc()
 			break
 		}
+		depth = depth + 1
 		lst = lst.parent
 	}
-	return memLoc
+	depth = depth - strings.Count(s.scope, "$inner")
+	return memLoc, depth
 }
 
 func (s *SymTblLst) GetSize(variable string) int {

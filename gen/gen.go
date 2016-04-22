@@ -145,7 +145,7 @@ func (g *Gen) genCompound(node syntree.Node) {
 func (g *Gen) genFunction(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
-		memLoc = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
+		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
 		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
@@ -239,9 +239,10 @@ func (g *Gen) genAssign(node syntree.Node) {
 	n1 := node.Children()[1]
 
 	memLoc := symtbl.MemLoc(0)
+	depth := 0
 	if symtbl.GlbSymTblMap[n0.SymKey()].HasId(n0.Name()) {
-		memLoc = symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp", n0.Name(), memLoc)
+		memLoc, depth = symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
+		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", n0.Name(), memLoc, depth)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -266,6 +267,13 @@ func (g *Gen) genAssign(node syntree.Node) {
 }
 
 func (g *Gen) genCall(node syntree.Node) {
+	memLoc := symtbl.MemLoc(0)
+	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
+		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
+		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
 	n0 := node.Children()[0]
 	g.gen(n0)
 
@@ -348,9 +356,10 @@ func (g *Gen) genOp(node syntree.Node) {
 
 func (g *Gen) genId(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
+	depth := 0
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
-		memLoc = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp", node.Name(), memLoc)
+		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -414,7 +423,7 @@ func (g *Gen) genGlobals() {
 func (g *Gen) genMain() {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId("main") {
-		memLoc = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc("main")
+		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc("main")
 		log.CodeLog.Printf("found main at %+v offset from gp", memLoc)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
