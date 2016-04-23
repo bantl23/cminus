@@ -1,0 +1,26 @@
+void funcA(void)
+{
+  int i;
+  int j;
+  int k;
+  i = 55;
+  j = 555;
+  k = 5555;
+  output(i);
+  output(j);
+  output(k);
+}
+
+void main(void)
+{
+  int i;
+  int j;
+  int k;
+  i = 99;
+  j = 999;
+  k = 9999;
+  funcA();
+  output(i);
+  output(j);
+  output(k);
+}

@@ -1,0 +1,18 @@
+void funcA(void)
+{
+  int i[2];
+  i[0] = 55;
+  i[1] = 555;
+  output(i[0]);
+  output(i[1]);
+}
+
+void main(void)
+{
+  int i[2];
+  i[0] = 99;
+  i[1] = 999;
+  funcA();
+  output(i[0]);
+  output(i[1]);
+}
