@@ -12,7 +12,7 @@ import (
 const (
 	ofpFO  int = 0  // old frame pointer
 	retFO  int = -1 // return address
-	initFO int = -2 // param list
+	initFO int = -3 // param list
 )
 
 const (
@@ -77,22 +77,22 @@ func (g *Gen) emitRMAbs(opcode string, target int, absolute int, comment string)
 	}
 }
 
-func (g *Gen) emitPushSize(size int) {
-	comment := fmt.Sprintf("push stack (%d)", size)
-	g.emitRM("LDA", sp, -1*size, sp, comment)
+func (g *Gen) emitPushSize(size int, comment string) {
+	c := fmt.Sprintf("push stack (%d): %s", size, comment)
+	g.emitRM("LDA", sp, -1*size, sp, c)
 }
 
-func (g *Gen) emitPush() {
-	g.emitPushSize(1)
+func (g *Gen) emitPush(comment string) {
+	g.emitPushSize(1, comment)
 }
 
-func (g *Gen) emitPopSize(size int) {
-	comment := fmt.Sprintf("pop stack (%d)", size)
-	g.emitRM("LDA", sp, 1*size, sp, comment)
+func (g *Gen) emitPopSize(size int, comment string) {
+	c := fmt.Sprintf("pop stack (%d): %s", size, comment)
+	g.emitRM("LDA", sp, 1*size, sp, c)
 }
 
-func (g *Gen) emitPop() {
-	g.emitPopSize(1)
+func (g *Gen) emitPop(comment string) {
+	g.emitPopSize(1, comment)
 }
 
 func (g *Gen) emitComment(comment string) {
@@ -127,23 +127,33 @@ func (g *Gen) genCompound(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	size := 0
 	for n0 != nil {
 		if n0.IsVar() {
 			if n0.ExpType() == syntree.INT_EXP_TYPE {
-				size = 1
+				size := 1
 				if n0.IsArray() {
 					size = n0.Value()
 				}
 				g.emitRM("LDC", ac, size, 0, "load "+n0.Name()+" length into ac")
-				g.emitPushSize(size)
+				g.emitPushSize(size, "allocating vars")
 			}
 		}
 		n0 = n0.Sibling()
 	}
 	g.gen(n1)
-	if size != 0 {
-		g.emitPopSize(size)
+
+	n0 = node.Children()[0]
+	for n0 != nil {
+		if n0.IsVar() {
+			if n0.ExpType() == syntree.INT_EXP_TYPE {
+				size := 1
+				if n0.IsArray() {
+					size = n0.Value()
+				}
+				g.emitPopSize(size, "deallocating vars")
+			}
+		}
+		n0 = n0.Sibling()
 	}
 }
 
@@ -161,12 +171,12 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	sav0 := g.emitSkip(3)
 
-	g.emitPush()
+	g.emitPush("allocating space for fp")
 	g.emitRO("ADD", ac1, sp, zero, "save sp to ac1")
 	g.emitRM("ST", fp, 0, sp, "save fp to sp")
-	g.emitPush()
+	g.emitPush("allocating space for sp")
 	g.emitRM("ST", sp, 0, sp, "save sp to sp")
-	g.emitPush()
+	g.emitPush("allocating space for ret pc")
 	g.emitRM("ST", ac, 0, sp, "save pc to sp")
 
 	g.emitRO("ADD", fp, ac1, zero, "set fp to sp")
@@ -175,11 +185,11 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.gen(n1)
 
 	g.emitRM("LD", ac, 0, sp, "load pc on sp into ac")
-	g.emitPop()
+	g.emitPop("deallocating space for fp")
 	g.emitRM("LD", sp, 0, sp, "load sp on sp into sp")
-	g.emitPop()
+	g.emitPop("deallocating space for sp")
 	g.emitRM("LD", fp, 0, sp, "load fp on sp into fp")
-	g.emitPop()
+	g.emitPop("dellocating space for ret pc")
 
 	if node.Name() == "main" {
 		halt := g.emitSkip(0) + 2
@@ -266,7 +276,7 @@ func (g *Gen) genAssign(node syntree.Node) {
 	g.gen(n1)
 
 	if n0.IsArray() {
-		g.emitPush()
+		g.emitPush("allocating space for assign ret val")
 		g.emitRM("ST", ac, 0, sp, "storing value of array")
 		nidx := n0.Children()[0]
 		g.gen(nidx)
@@ -274,7 +284,7 @@ func (g *Gen) genAssign(node syntree.Node) {
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
 		g.emitRO("ADD", ac, fp, ac, "get array memory location")
 		g.emitRM("LD", ac1, 0, sp, "loading value of array")
-		g.emitPop()
+		g.emitPop("deallocating space for assign ret val")
 		g.emitRM("ST", ac1, 0, ac, "load value into ac")
 	} else {
 		g.emitRM("ST", ac, initFO-memLoc.Get(), fp, "store ac into id "+n0.Name())
@@ -312,12 +322,12 @@ func (g *Gen) genOp(node syntree.Node) {
 	n1 := node.Children()[1]
 
 	g.gen(n0)
-	g.emitPush()
+	g.emitPush("allocating space for op ret val")
 	g.emitRM("ST", ac, 0, sp, "storing left hand side of operator from ac")
 
 	g.gen(n1)
 	g.emitRM("LD", ac1, 0, sp, "loading left hand side of operator into ac1")
-	g.emitPop()
+	g.emitPop("deallocating space for op ret val")
 
 	switch node.TokType() {
 	case syntree.PLUS:
@@ -401,7 +411,7 @@ func (g *Gen) genParam(node syntree.Node) {
 			}
 		}
 		g.emitComment("pushing " + node.Name() + " param into stack")
-		g.emitPushSize(size)
+		g.emitPushSize(size, "allocating space for params")
 	}
 }
 
@@ -412,7 +422,7 @@ func (g *Gen) genVar(node syntree.Node) {
 			size = node.Value()
 		}
 		g.emitComment("pushing " + node.Name() + " var into stack")
-		g.emitPushSize(size)
+		g.emitPushSize(size, "allocating space for vars")
 	}
 }
 
@@ -431,8 +441,7 @@ func (g *Gen) genGlobals() {
 	g.emitComment("global space beg")
 	glbs := symtbl.GlbSymTblMap[symtbl.ROOT_KEY].SymTbl()
 	size := len(glbs) - 1
-	g.emitComment("allocating globals")
-	g.emitPushSize(size)
+	g.emitPushSize(size, "allocating space for globals")
 	g.emitComment("global space end")
 }
 
