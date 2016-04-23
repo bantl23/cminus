@@ -49,7 +49,7 @@ var ReturnHasChild = false
 func CheckReturnValue(node syntree.Node) {
 	if node.IsReturn() {
 		FoundReturn = true
-		if node.Children() != nil {
+		if node.Children()[0] != nil {
 			ReturnHasChild = true
 		} else {
 			ReturnHasChild = false

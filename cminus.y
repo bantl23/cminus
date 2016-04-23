@@ -256,6 +256,7 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
 
 return_stmt         : RETURN SEMI                   {
                                                       $$ = syntree.NewStmtReturnNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      $$.AddChild(nil)
                                                       log.ParseLog.Printf("return_stmt0: %+v\n", $$)
 																										}
                     | RETURN expression SEMI        {
