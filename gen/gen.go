@@ -178,11 +178,28 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.emitRM("ST", sp, 0, sp, "save sp to sp")
 	g.emitPush("allocating space for ret pc")
 	g.emitRM("ST", ac, 0, sp, "save pc to sp")
-
 	g.emitRO("ADD", fp, ac1, zero, "set fp to sp")
 
-	g.gen(n0)
+	for n0 != nil {
+		if n0.IsParam() {
+			if n0.ExpType() == syntree.INT_EXP_TYPE {
+				g.emitPush("allocating params")
+			}
+		}
+		n0 = n0.Sibling()
+	}
+
 	g.gen(n1)
+
+	n0 = node.Children()[0]
+	for n0 != nil {
+		if n0.IsParam() {
+			if n0.ExpType() == syntree.INT_EXP_TYPE {
+				g.emitPop("deallocating params")
+			}
+		}
+		n0 = n0.Sibling()
+	}
 
 	g.emitRM("LD", ac, 0, sp, "load pc on sp into ac")
 	g.emitPop("deallocating space for fp")
@@ -287,7 +304,11 @@ func (g *Gen) genAssign(node syntree.Node) {
 		g.emitPop("deallocating space for assign ret val")
 		g.emitRM("ST", ac1, 0, ac, "load value into ac")
 	} else {
-		g.emitRM("ST", ac, initFO-memLoc.Get(), fp, "store ac into id "+n0.Name())
+		g.emitRM("LDA", ac1, 0, fp, "store fp into ac1")
+		for i := 0; i < depth; i++ {
+			g.emitRM("LD", ac1, 0, ac1, "get fp from previous scope")
+		}
+		g.emitRM("ST", ac, initFO-memLoc.Get(), ac1, "store ac into id "+n0.Name())
 	}
 }
 
@@ -398,7 +419,11 @@ func (g *Gen) genId(node syntree.Node) {
 		g.emitRO("ADD", ac, fp, ac, "get array memory location")
 		g.emitRM("LD", ac, 0, ac, "load value into ac")
 	} else {
-		g.emitRM("LD", ac, initFO-memLoc.Get(), fp, "store ac with id "+node.Name())
+		g.emitRM("LDA", ac1, 0, fp, "store fp into ac1")
+		for i := 0; i < depth; i++ {
+			g.emitRM("LD", ac1, 0, ac1, "get fp from previous scope")
+		}
+		g.emitRM("LD", ac, initFO-memLoc.Get(), ac1, "store ac with id "+node.Name())
 	}
 }
 
@@ -416,14 +441,6 @@ func (g *Gen) genParam(node syntree.Node) {
 }
 
 func (g *Gen) genVar(node syntree.Node) {
-	if node.ExpType() == syntree.INT_EXP_TYPE {
-		size := 1
-		if node.IsArray() {
-			size = node.Value()
-		}
-		g.emitComment("pushing " + node.Name() + " var into stack")
-		g.emitPushSize(size, "allocating space for vars")
-	}
 }
 
 func (g *Gen) genPrelude() {
@@ -431,7 +448,7 @@ func (g *Gen) genPrelude() {
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load global pointer with maxaddress")
 	g.emitRM("LDA", fp, 0, gp, "copy global pointer into frame pointer")
-	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
+	g.emitRM("LDA", sp, 1, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitRM("LDC", zero, 0, 0, "set zero")
 	g.emitComment("prelude end")
@@ -439,9 +456,13 @@ func (g *Gen) genPrelude() {
 
 func (g *Gen) genGlobals() {
 	g.emitComment("global space beg")
+	g.emitPushSize(3, "pushing blank spaces so scoping will work consistantly")
 	glbs := symtbl.GlbSymTblMap[symtbl.ROOT_KEY].SymTbl()
-	size := len(glbs) - 1
-	g.emitPushSize(size, "allocating space for globals")
+	for k, v := range glbs {
+		size := v.Size()
+		comment := fmt.Sprintf("allocating space for %s (%d)", k, size)
+		g.emitPushSize(size, comment)
+	}
 	g.emitComment("global space end")
 }
 

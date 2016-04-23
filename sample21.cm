@@ -1,0 +1,7 @@
+int i;
+
+void main(void)
+{
+  i = 99;
+  output(i);
+}
