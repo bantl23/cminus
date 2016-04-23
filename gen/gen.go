@@ -11,7 +11,7 @@ import (
 
 const (
 	ofpFO  int = 0  // old frame pointer
-	retFO  int = -1 // return address
+	retFO  int = -2 // return address
 	initFO int = -3 // param list
 )
 
@@ -202,7 +202,7 @@ func (g *Gen) genFunction(node syntree.Node) {
 		n0 = n0.Sibling()
 	}
 
-	g.emitRM("LD", ac, 0, sp, "load pc on sp into ac")
+	g.emitRM("LD", ac1, 0, sp, "load pc on sp into ac1")
 	g.emitPop("deallocating space for fp")
 	g.emitRM("LD", sp, 0, sp, "load sp on sp into sp")
 	g.emitPop("deallocating space for sp")
@@ -213,7 +213,7 @@ func (g *Gen) genFunction(node syntree.Node) {
 		halt := g.emitSkip(0) + 2
 		g.emitRM("LDA", pc, halt, 0, "func: jump to halt")
 	} else {
-		g.emitRM("LDA", pc, 0, ac, "func: jump back to calling function")
+		g.emitRM("LDA", pc, 0, ac1, "func: jump back to calling function")
 	}
 
 	sav1 := g.emitSkip(0)

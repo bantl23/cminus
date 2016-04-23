@@ -1,0 +1,9 @@
+int funcA(void)
+{
+  return 1;
+}
+
+void main(void)
+{
+  output(funcA());
+}
