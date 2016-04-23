@@ -21,6 +21,7 @@ const (
 	fp   int = 5 // frame pointer
 	sp   int = 4 // stack pointer
 	zero int = 3 // zero
+	ac2  int = 2 // accumlator
 	ac1  int = 1 // accumlator
 	ac   int = 0 // accumlator
 )
@@ -292,6 +293,11 @@ func (g *Gen) genAssign(node syntree.Node) {
 	g.gen(n0)
 	g.gen(n1)
 
+	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
+	for i := 0; i < depth; i++ {
+		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
+	}
+
 	if n0.IsArray() {
 		g.emitPush("allocating space for assign ret val")
 		g.emitRM("ST", ac, 0, sp, "storing value of array")
@@ -299,16 +305,12 @@ func (g *Gen) genAssign(node syntree.Node) {
 		g.gen(nidx)
 		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
-		g.emitRO("ADD", ac, fp, ac, "get array memory location")
+		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
 		g.emitRM("LD", ac1, 0, sp, "loading value of array")
 		g.emitPop("deallocating space for assign ret val")
 		g.emitRM("ST", ac1, 0, ac, "load value into ac")
 	} else {
-		g.emitRM("LDA", ac1, 0, fp, "store fp into ac1")
-		for i := 0; i < depth; i++ {
-			g.emitRM("LD", ac1, 0, ac1, "get fp from previous scope")
-		}
-		g.emitRM("ST", ac, initFO-memLoc.Get(), ac1, "store ac into id "+n0.Name())
+		g.emitRM("ST", ac, initFO-memLoc.Get(), ac2, "store ac into id "+n0.Name())
 	}
 }
 
@@ -411,19 +413,20 @@ func (g *Gen) genId(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
+	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
+	for i := 0; i < depth; i++ {
+		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
+	}
+
 	if node.IsArray() {
 		n0 := node.Children()[0]
 		g.gen(n0)
 		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
-		g.emitRO("ADD", ac, fp, ac, "get array memory location")
+		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
 		g.emitRM("LD", ac, 0, ac, "load value into ac")
 	} else {
-		g.emitRM("LDA", ac1, 0, fp, "store fp into ac1")
-		for i := 0; i < depth; i++ {
-			g.emitRM("LD", ac1, 0, ac1, "get fp from previous scope")
-		}
-		g.emitRM("LD", ac, initFO-memLoc.Get(), ac1, "store ac with id "+node.Name())
+		g.emitRM("LD", ac, initFO-memLoc.Get(), ac2, "store ac with id "+node.Name())
 	}
 }
 
