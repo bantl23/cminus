@@ -16,12 +16,13 @@ const (
 )
 
 const (
-	pc  int = 7 // program counter
-	gp  int = 6 // global pointer
-	fp  int = 5 // frame pointer
-	sp  int = 4 // stack pointer
-	ac1 int = 1 // accumlator
-	ac  int = 0 // accumlator
+	pc   int = 7 // program counter
+	gp   int = 6 // global pointer
+	fp   int = 5 // frame pointer
+	sp   int = 4 // stack pointer
+	zero int = 3 // zero
+	ac1  int = 1 // accumlator
+	ac   int = 0 // accumlator
 )
 
 type Gen struct {
@@ -91,7 +92,7 @@ func (g *Gen) emitPopSize(size int) {
 }
 
 func (g *Gen) emitPop() {
-	g.emitPushSize(1)
+	g.emitPopSize(1)
 }
 
 func (g *Gen) emitComment(comment string) {
@@ -126,10 +127,11 @@ func (g *Gen) genCompound(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
+	size := 0
 	for n0 != nil {
 		if n0.IsVar() {
 			if n0.ExpType() == syntree.INT_EXP_TYPE {
-				size := 1
+				size = 1
 				if n0.IsArray() {
 					size = n0.Value()
 				}
@@ -140,6 +142,9 @@ func (g *Gen) genCompound(node syntree.Node) {
 		n0 = n0.Sibling()
 	}
 	g.gen(n1)
+	if size != 0 {
+		g.emitPopSize(size)
+	}
 }
 
 func (g *Gen) genFunction(node syntree.Node) {
@@ -156,19 +161,31 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	sav0 := g.emitSkip(3)
 
-	g.emitRO("ADD", ac1, fp, 0, "save fp into ac1 for storing")
-	g.emitRO("ADD", fp, sp, 0, "load fp with current sp")
 	g.emitPush()
-	g.emitRM("ST", fp, 0, sp, "save fp into stack")
+	g.emitRO("ADD", ac1, sp, zero, "save sp to ac1")
+	g.emitRM("ST", fp, 0, sp, "save fp to sp")
 	g.emitPush()
-	g.emitRM("ST", ac1, 0, sp, "save cl to stack")
+	g.emitRM("ST", sp, 0, sp, "save sp to sp")
+	g.emitPush()
+	g.emitRM("ST", ac, 0, sp, "save pc to sp")
+
+	g.emitRO("ADD", fp, ac1, zero, "set fp to sp")
 
 	g.gen(n0)
 	g.gen(n1)
 
+	g.emitRM("LD", ac, 0, sp, "load pc on sp into ac")
+	g.emitPop()
+	g.emitRM("LD", sp, 0, sp, "load sp on sp into sp")
+	g.emitPop()
+	g.emitRM("LD", fp, 0, sp, "load fp on sp into fp")
+	g.emitPop()
+
 	if node.Name() == "main" {
 		halt := g.emitSkip(0) + 2
 		g.emitRM("LDA", pc, halt, 0, "func: jump to halt")
+	} else {
+		g.emitRM("LDA", pc, 0, ac, "func: jump back to calling function")
 	}
 
 	sav1 := g.emitSkip(0)
@@ -178,7 +195,6 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.emitRM("ST", ac1, 0-memLoc.Get(), gp, "saving ac1 for "+node.Name())
 	g.emitRM("LDA", pc, sav1, 0, "func: jump to end")
 	g.emitRestore()
-
 }
 
 func (g *Gen) genIteration(node syntree.Node) {
@@ -201,10 +217,9 @@ func (g *Gen) genIteration(node syntree.Node) {
 }
 
 func (g *Gen) genReturn(node syntree.Node) {
-	//TODO
 	n0 := node.Children()[0]
 	g.gen(n0)
-	//g.emitRM("LD", pc, retFO, mp, "return to caller")
+	g.emitRM("LD", pc, retFO, fp, "return to caller")
 }
 
 func (g *Gen) genSelection(node syntree.Node) {
@@ -282,8 +297,9 @@ func (g *Gen) genCall(node syntree.Node) {
 	} else if node.Name() == "output" {
 		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
 	} else {
-		// TODO
-		log.CodeLog.Printf("TODO %+v", node)
+		ret := g.emitSkip(0) + 2
+		g.emitRM("LDC", ac, ret, 0, "loading ret pc into ac")
+		g.emitRM("LD", pc, 0-memLoc.Get(), gp, "func: jump func "+node.Name())
 	}
 }
 
@@ -407,16 +423,16 @@ func (g *Gen) genPrelude() {
 	g.emitRM("LDA", fp, 0, gp, "copy global pointer into frame pointer")
 	g.emitRM("LDA", sp, 0, gp, "copy global pointer into stack pointer")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
+	g.emitRM("LDC", zero, 0, 0, "set zero")
 	g.emitComment("prelude end")
 }
 
 func (g *Gen) genGlobals() {
 	g.emitComment("global space beg")
 	glbs := symtbl.GlbSymTblMap[symtbl.ROOT_KEY].SymTbl()
-	for k, _ := range glbs {
-		g.emitPush()
-		g.emitComment("added " + k + " to global space")
-	}
+	size := len(glbs) - 1
+	g.emitComment("allocating globals")
+	g.emitPushSize(size)
 	g.emitComment("global space end")
 }
 
