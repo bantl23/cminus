@@ -172,6 +172,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	sav0 := g.emitSkip(3)
 
+	g.emitRM("LD", ac, 0, sp, "load return pc from stack into ac")
+	g.emitPop("deallocate return pc")
 	g.emitPush("allocating space for fp")
 	g.emitRO("ADD", ac1, sp, zero, "save sp to ac1")
 	g.emitRM("ST", fp, 0, sp, "save fp to sp")
@@ -210,8 +212,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.emitPop("dellocating space for ret pc")
 
 	if node.Name() == "main" {
-		halt := g.emitSkip(0) + 2
-		g.emitRM("LDA", pc, halt, 0, "func: jump to halt")
+		halt := g.emitSkip(0) + 4
+		g.emitRM("LDA", pc, halt, zero, "func: jump to halt")
 	} else {
 		g.emitRM("LDA", pc, 0, ac1, "func: jump back to calling function")
 	}
@@ -232,6 +234,8 @@ func (g *Gen) genIteration(node syntree.Node) {
 	sav0 := g.emitSkip(0)
 	g.emitComment("while: jump after body comes back here")
 	g.gen(n0)
+	g.emitRM("LD", ac, 0, sp, "load op ret val from stack into ac")
+	g.emitPop("deallocating op ret val")
 
 	sav1 := g.emitSkip(1)
 	g.emitComment("while: jump to end belongs here")
@@ -290,7 +294,6 @@ func (g *Gen) genAssign(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 
-	g.gen(n0)
 	g.gen(n1)
 
 	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
@@ -299,17 +302,22 @@ func (g *Gen) genAssign(node syntree.Node) {
 	}
 
 	if n0.IsArray() {
-		g.emitPush("allocating space for assign ret val")
-		g.emitRM("ST", ac, 0, sp, "storing value of array")
 		nidx := n0.Children()[0]
 		g.gen(nidx)
+
+		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac")
+		g.emitPop("deallocate array index")
 		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
 		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
-		g.emitRM("LD", ac1, 0, sp, "loading value of array")
-		g.emitPop("deallocating space for assign ret val")
-		g.emitRM("ST", ac1, 0, ac, "load value into ac")
+
+		g.emitRM("LD", ac1, 0, sp, "load right assign from stack into ac1")
+		g.emitPop("deallocate right assign")
+
+		g.emitRM("ST", ac1, 0, ac, "store ac into id "+n0.Name())
 	} else {
+		g.emitRM("LD", ac, 0, sp, "load right assign from stack into ac")
+		g.emitPop("deallocate right assign")
 		g.emitRM("ST", ac, initFO-memLoc.Get(), ac2, "store ac into id "+n0.Name())
 	}
 }
@@ -323,21 +331,31 @@ func (g *Gen) genCall(node syntree.Node) {
 		log.ErrorLog.Printf("error could not find id")
 	}
 	n0 := node.Children()[0]
-	g.gen(n0)
+	if n0 != nil {
+		g.gen(n0)
+		g.emitRM("LD", ac, 0, sp, "load arg from stack into ac")
+		g.emitPop("deallocate call arg")
+	}
 
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
+		g.emitPush("allocate space for stdin")
+		g.emitRM("ST", ac, 0, sp, "store stdin from ac to stack")
 	} else if node.Name() == "output" {
-		g.emitRO("OUT", ac, 0, 0, "write to stdout with ac")
+		g.emitRO("OUT", ac, 0, 0, "write to stdout from ac")
 	} else {
-		ret := g.emitSkip(0) + 2
-		g.emitRM("LDC", ac, ret, 0, "loading ret pc into ac")
+		ret := g.emitSkip(0) + 4
+		g.emitRM("LDC", ac, ret, 0, "load return pc into ac")
+		g.emitPush("allocate space for return pc")
+		g.emitRM("ST", ac, 0, sp, "store return pc onto stack")
 		g.emitRM("LD", pc, 0-memLoc.Get(), gp, "func: jump func "+node.Name())
 	}
 }
 
 func (g *Gen) genConst(node syntree.Node) {
-	g.emitRM("LDC", ac, node.Value(), 0, "load constant directly into ac")
+	g.emitRM("LDC", ac, node.Value(), 0, "load const into ac")
+	g.emitPush("allocate const")
+	g.emitRM("ST", ac, 0, sp, "store const from ac onto stack")
 }
 
 func (g *Gen) genOp(node syntree.Node) {
@@ -345,12 +363,12 @@ func (g *Gen) genOp(node syntree.Node) {
 	n1 := node.Children()[1]
 
 	g.gen(n0)
-	g.emitPush("allocating space for op ret val")
-	g.emitRM("ST", ac, 0, sp, "storing left hand side of operator from ac")
-
 	g.gen(n1)
-	g.emitRM("LD", ac1, 0, sp, "loading left hand side of operator into ac1")
-	g.emitPop("deallocating space for op ret val")
+
+	g.emitRM("LD", ac, 0, sp, "load left op from stack into ac")
+	g.emitPop("deallocate left op")
+	g.emitRM("LD", ac1, 0, sp, "load right op from stack into ac1")
+	g.emitPop("deallocate right op")
 
 	switch node.TokType() {
 	case syntree.PLUS:
@@ -400,7 +418,8 @@ func (g *Gen) genOp(node syntree.Node) {
 	default:
 		log.ErrorLog.Printf("unknown operator type %s", node.TokType())
 	}
-	g.emitRM("ST", ac, 0, sp, "storing operation result into ac")
+	g.emitPush("allocate op result")
+	g.emitRM("ST", ac, 0, sp, "store op result from ac onto stack")
 }
 
 func (g *Gen) genId(node syntree.Node) {
@@ -421,26 +440,20 @@ func (g *Gen) genId(node syntree.Node) {
 	if node.IsArray() {
 		n0 := node.Children()[0]
 		g.gen(n0)
+		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac "+node.Name())
+		g.emitPop("deallocate array index")
 		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
 		g.emitRO("SUB", ac, ac1, ac, "get array offset")
 		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
-		g.emitRM("LD", ac, 0, ac, "load value into ac")
+		g.emitRM("LD", ac, 0, ac, "load ac with value of id "+node.Name())
 	} else {
-		g.emitRM("LD", ac, initFO-memLoc.Get(), ac2, "store ac with id "+node.Name())
+		g.emitRM("LD", ac, initFO-memLoc.Get(), ac2, "load ac with value of id "+node.Name())
 	}
+	g.emitPush("allocate id " + node.Name())
+	g.emitRM("ST", ac, 0, sp, "store id from ac onto stack")
 }
 
 func (g *Gen) genParam(node syntree.Node) {
-	if node.ExpType() == syntree.INT_EXP_TYPE {
-		size := 1
-		if node.IsArray() {
-			if node.IsArray() {
-				size = node.Value()
-			}
-		}
-		g.emitComment("pushing " + node.Name() + " param into stack")
-		g.emitPushSize(size, "allocating space for params")
-	}
 }
 
 func (g *Gen) genVar(node syntree.Node) {
@@ -477,7 +490,8 @@ func (g *Gen) genMain() {
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
-
+	g.emitPush("allocate space for fake return pc")
+	g.emitRM("ST", zero, 0, sp, "store fake return pc onto stack")
 	g.emitRM("LD", pc, 0-memLoc.Get(), gp, "jumping to main")
 }
 
