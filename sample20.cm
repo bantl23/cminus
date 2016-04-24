@@ -1,0 +1,15 @@
+void funcA(int i, int j)
+{
+  output(i);
+  output(j);
+}
+
+void main(void)
+{
+  int i;
+  int j;
+  i = 1;
+  j = 2;
+  funcA(i, j);
+  output(3);
+}
