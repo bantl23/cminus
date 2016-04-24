@@ -1,0 +1,22 @@
+int gcd (int u, int v)
+{
+  int w;
+  output(u);
+  output(v);
+  w = u + v;
+  output(w);
+  return w;
+}
+
+void main(void)
+{
+  int x;
+  int y;
+  int z;
+  x = input();
+  output(x);
+  y = input();
+  output(y);
+  z = gcd(x,y);
+  output(z);
+}
