@@ -11,9 +11,9 @@ void main(void)
 {
   int i;
   int j;
-  i = 1;
-  j = 2;
-  funcA(i, j);
+  i = 44;
+  j = 55;
   funcA(1, 2);
+  funcA(i, j);
   output(3);
 }
