@@ -1,0 +1,13 @@
+void main(void)
+{
+  int i;
+  int j[2];
+
+  i = input();
+  output(i);
+
+  j[0] = input();
+  j[1] = input();
+  output(j[0]);
+  output(j[1]);
+}
