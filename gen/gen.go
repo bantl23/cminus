@@ -416,27 +416,6 @@ func (g *Gen) genCall(node syntree.Node) {
 				gotFirstParamAddress = true
 			}
 		}
-		/*
-			g.emitRM("ST", zero, 0, sp, "store fake first param address")
-				for n0 != nil {
-					if n0.IsArray() {
-						g.getAddress(n0)
-						log.CodeLog.Printf("*************** %+v", n0)
-						g.emitRM("LD", ac, 0, sp, "load param array address from stack into ac")
-						g.emitPop("deallocate param array address")
-						g.emitPush("allocate param array address" + n0.Name())
-						g.emitRM("ST", ac, 0, sp, "store param array address from ac onto stack")
-					} else {
-						g.gen(n0)
-						log.CodeLog.Printf("*************** %+v", n0)
-						g.emitRM("LD", ac, 0, sp, "load param from stack into ac")
-						g.emitPop("deallocate param")
-						g.emitPush("allocate param " + n0.Name())
-						g.emitRM("ST", ac, 0, sp, "store param from ac onto stack")
-					}
-					n0 = n0.Sibling()
-				}
-		*/
 
 		ret := g.emitSkip(0) + 6
 		g.emitPush("allocate first param address")
