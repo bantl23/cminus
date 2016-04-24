@@ -330,20 +330,23 @@ func (g *Gen) genCall(node syntree.Node) {
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
-	n0 := node.Children()[0]
-	if n0 != nil {
-		g.gen(n0)
-		g.emitRM("LD", ac, 0, sp, "load arg from stack into ac")
-		g.emitPop("deallocate call arg")
-	}
 
 	if node.Name() == "input" {
 		g.emitRO("IN", ac, 0, 0, "read from stdin into ac")
 		g.emitPush("allocate space for stdin")
 		g.emitRM("ST", ac, 0, sp, "store stdin from ac to stack")
 	} else if node.Name() == "output" {
+		n0 := node.Children()[0]
+		g.gen(n0)
+		g.emitRM("LD", ac, 0, sp, "load arg from stack into ac")
+		g.emitPop("deallocate call arg")
 		g.emitRO("OUT", ac, 0, 0, "write to stdout from ac")
 	} else {
+		n0 := node.Children()[0]
+		for n0 != nil {
+			log.CodeLog.Printf("******* call sibs %+v", n0)
+			n0 = n0.Sibling()
+		}
 		ret := g.emitSkip(0) + 4
 		g.emitRM("LDC", ac, ret, 0, "load return pc into ac")
 		g.emitPush("allocate space for return pc")
