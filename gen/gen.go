@@ -124,6 +124,63 @@ func (g *Gen) emitRestore() {
 	g.loc = g.highLoc
 }
 
+func (g *Gen) getValue(node syntree.Node) {
+	memLoc := symtbl.MemLoc(0)
+	depth := 0
+	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
+		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
+
+	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
+	for i := 0; i < depth; i++ {
+		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
+	}
+	g.emitRM("LDC", ac, initFO-memLoc.Get(), zero, "load ac with offset")
+	g.emitRO("ADD", ac2, ac2, ac, "load ac2 with address of "+node.Name())
+
+	if node.IsArray() {
+		n0 := node.Children()[0]
+		g.gen(n0)
+		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac "+node.Name())
+		g.emitPop("deallocate array index")
+		g.emitRO("SUB", ac2, ac2, ac, "load ac2 with array address of "+node.Name())
+	}
+	g.emitRM("LD", ac2, 0, ac2, "load ac with value of "+node.Name())
+	g.emitPush("allocate id value " + node.Name())
+	g.emitRM("ST", ac2, 0, sp, "store value from ac onto stack")
+}
+
+func (g *Gen) getAddress(node syntree.Node) {
+	memLoc := symtbl.MemLoc(0)
+	depth := 0
+	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
+		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
+		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+	} else {
+		log.ErrorLog.Printf("error could not find id")
+	}
+
+	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
+	for i := 0; i < depth; i++ {
+		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
+	}
+	g.emitRM("LDC", ac, initFO-memLoc.Get(), zero, "load ac with offset")
+	g.emitRO("ADD", ac2, ac2, ac, "load ac2 with address of "+node.Name())
+
+	if node.IsArray() {
+		n0 := node.Children()[0]
+		g.gen(n0)
+		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac "+node.Name())
+		g.emitPop("deallocate array index")
+		g.emitRO("SUB", ac2, ac2, ac, "load ac2 with array address of "+node.Name())
+	}
+	g.emitPush("allocate id value " + node.Name())
+	g.emitRM("ST", ac2, 0, sp, "store id value from ac2 onto stack")
+}
+
 func (g *Gen) genCompound(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
@@ -174,6 +231,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	g.emitRM("LD", ac, 0, sp, "load return pc from stack into ac")
 	g.emitPop("deallocate return pc")
+	g.emitRM("LD", ac2, 0, sp, "load param address from stack into ac2")
+	g.emitPop("deallocate first param address")
 	g.emitPush("allocating space for fp")
 	g.emitRO("ADD", ac1, sp, zero, "save sp to ac1")
 	g.emitRM("ST", fp, 0, sp, "save fp to sp")
@@ -183,11 +242,19 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.emitRM("ST", ac, 0, sp, "save pc to sp")
 	g.emitRO("ADD", fp, ac1, zero, "set fp to sp")
 
+	offset := 0
 	for n0 != nil {
-		if n0.IsParam() {
-			if n0.ExpType() == syntree.INT_EXP_TYPE {
-				g.emitPush("allocating params")
+		if n0.IsParam() && n0.ExpType() == syntree.INT_EXP_TYPE {
+			if n0.IsArray() {
+				g.emitRM("LD", ac, 0-offset, ac2, "load input param array address into ac")
+				g.emitPush("allocating input param array address")
+				/// TODO??
+			} else {
+				g.emitRM("LD", ac, 0-offset, ac2, "load input param value into ac")
+				g.emitPush("allocating input param value")
+				g.emitRM("ST", ac, 0, sp, "store input param value onto stack")
 			}
+			offset = offset + 1
 		}
 		n0 = n0.Sibling()
 	}
@@ -196,10 +263,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	n0 = node.Children()[0]
 	for n0 != nil {
-		if n0.IsParam() {
-			if n0.ExpType() == syntree.INT_EXP_TYPE {
-				g.emitPop("deallocating params")
-			}
+		if n0.IsParam() && n0.ExpType() == syntree.INT_EXP_TYPE {
+			g.emitPop("deallocating param")
 		}
 		n0 = n0.Sibling()
 	}
@@ -212,7 +277,7 @@ func (g *Gen) genFunction(node syntree.Node) {
 	g.emitPop("dellocating space for ret pc")
 
 	if node.Name() == "main" {
-		halt := g.emitSkip(0) + 4
+		halt := g.emitSkip(0) + 6
 		g.emitRM("LDA", pc, halt, zero, "func: jump to halt")
 	} else {
 		g.emitRM("LDA", pc, 0, ac1, "func: jump back to calling function")
@@ -285,41 +350,17 @@ func (g *Gen) genAssign(node syntree.Node) {
 	n0 := node.Children()[0]
 	n1 := node.Children()[1]
 
-	memLoc := symtbl.MemLoc(0)
-	depth := 0
-	if symtbl.GlbSymTblMap[n0.SymKey()].HasId(n0.Name()) {
-		memLoc, depth = symtbl.GlbSymTblMap[n0.SymKey()].GetMemLoc(n0.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", n0.Name(), memLoc, depth)
-	} else {
-		log.ErrorLog.Printf("error could not find id")
-	}
-
 	g.gen(n1)
 
-	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
-	for i := 0; i < depth; i++ {
-		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
-	}
+	g.getAddress(n0)
 
-	if n0.IsArray() {
-		nidx := n0.Children()[0]
-		g.gen(nidx)
+	g.emitRM("LD", ac1, 0, sp, "load left id address from stack into ac1 "+n0.Name())
+	g.emitPop("deallocate left id address")
 
-		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac")
-		g.emitPop("deallocate array index")
-		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
-		g.emitRO("SUB", ac, ac1, ac, "get array offset")
-		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
+	g.emitRM("LD", ac, 0, sp, "load right id value from stack into ac")
+	g.emitPop("deallocate right id value")
 
-		g.emitRM("LD", ac1, 0, sp, "load right assign from stack into ac1")
-		g.emitPop("deallocate right assign")
-
-		g.emitRM("ST", ac1, 0, ac, "store ac into id "+n0.Name())
-	} else {
-		g.emitRM("LD", ac, 0, sp, "load right assign from stack into ac")
-		g.emitPop("deallocate right assign")
-		g.emitRM("ST", ac, initFO-memLoc.Get(), ac2, "store ac into id "+n0.Name())
-	}
+	g.emitRM("ST", ac, 0, ac1, "store ac into id "+n0.Name())
 }
 
 func (g *Gen) genCall(node syntree.Node) {
@@ -338,20 +379,81 @@ func (g *Gen) genCall(node syntree.Node) {
 	} else if node.Name() == "output" {
 		n0 := node.Children()[0]
 		g.gen(n0)
-		g.emitRM("LD", ac, 0, sp, "load arg from stack into ac")
-		g.emitPop("deallocate call arg")
+		g.emitRM("LD", ac, 0, sp, "load param from stack into ac")
+		g.emitPop("deallocate call param")
 		g.emitRO("OUT", ac, 0, 0, "write to stdout from ac")
 	} else {
+
 		n0 := node.Children()[0]
+		params := []syntree.Node{}
 		for n0 != nil {
-			log.CodeLog.Printf("******* call sibs %+v", n0)
+			params = append(params, nil)
+			copy(params[1:], params[0:])
+			params[0] = n0
 			n0 = n0.Sibling()
 		}
-		ret := g.emitSkip(0) + 4
+		gotFirstParamAddress := false
+		paramLen := len(params)
+		g.emitRM("LDC", ac1, 0, zero, "store fake first param address")
+		for _, e := range params {
+			if e.IsArray() {
+				g.getAddress(e)
+				log.CodeLog.Printf("*************** %+v", e)
+				g.emitRM("LD", ac, 0, sp, "load param array address from stack into ac")
+				g.emitPop("deallocate param array address")
+				g.emitPush("allocate param array address" + e.Name())
+				g.emitRM("ST", ac, 0, sp, "store param array address from ac onto stack")
+			} else {
+				g.gen(e)
+				log.CodeLog.Printf("*************** %+v", e)
+				g.emitRM("LD", ac, 0, sp, "load param from stack into ac")
+				g.emitPop("deallocate param")
+				g.emitPush("allocate param " + e.Name())
+				g.emitRM("ST", ac, 0, sp, "store param from ac onto stack")
+			}
+			if gotFirstParamAddress == false {
+				g.emitRM("LDA", ac1, 0, sp, "load location of first param into ac1")
+				gotFirstParamAddress = true
+			}
+		}
+		/*
+			g.emitRM("ST", zero, 0, sp, "store fake first param address")
+				for n0 != nil {
+					if n0.IsArray() {
+						g.getAddress(n0)
+						log.CodeLog.Printf("*************** %+v", n0)
+						g.emitRM("LD", ac, 0, sp, "load param array address from stack into ac")
+						g.emitPop("deallocate param array address")
+						g.emitPush("allocate param array address" + n0.Name())
+						g.emitRM("ST", ac, 0, sp, "store param array address from ac onto stack")
+					} else {
+						g.gen(n0)
+						log.CodeLog.Printf("*************** %+v", n0)
+						g.emitRM("LD", ac, 0, sp, "load param from stack into ac")
+						g.emitPop("deallocate param")
+						g.emitPush("allocate param " + n0.Name())
+						g.emitRM("ST", ac, 0, sp, "store param from ac onto stack")
+					}
+					n0 = n0.Sibling()
+				}
+		*/
+
+		ret := g.emitSkip(0) + 6
+		g.emitPush("allocate first param address")
+		g.emitRM("ST", ac1, 0, sp, "store first param address from ac1 onto stack")
 		g.emitRM("LDC", ac, ret, 0, "load return pc into ac")
 		g.emitPush("allocate space for return pc")
 		g.emitRM("ST", ac, 0, sp, "store return pc onto stack")
 		g.emitRM("LD", pc, 0-memLoc.Get(), gp, "func: jump func "+node.Name())
+
+		g.emitPopSize(paramLen, "deallocate params")
+		/*
+			n0 = node.Children()[0]
+			for n0 != nil {
+				g.emitPop("deallocate param " + n0.Name())
+				n0 = n0.Sibling()
+			}
+		*/
 	}
 }
 
@@ -426,34 +528,7 @@ func (g *Gen) genOp(node syntree.Node) {
 }
 
 func (g *Gen) genId(node syntree.Node) {
-	memLoc := symtbl.MemLoc(0)
-	depth := 0
-	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
-		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
-	} else {
-		log.ErrorLog.Printf("error could not find id")
-	}
-
-	g.emitRM("LDA", ac2, 0, fp, "store fp into ac2")
-	for i := 0; i < depth; i++ {
-		g.emitRM("LD", ac2, 0, ac2, "get fp from previous scope")
-	}
-
-	if node.IsArray() {
-		n0 := node.Children()[0]
-		g.gen(n0)
-		g.emitRM("LD", ac, 0, sp, "load array index from stack into ac "+node.Name())
-		g.emitPop("deallocate array index")
-		g.emitRM("LDC", ac1, initFO-memLoc.Get(), 0, "load base address for array")
-		g.emitRO("SUB", ac, ac1, ac, "get array offset")
-		g.emitRO("ADD", ac, ac2, ac, "get array memory location")
-		g.emitRM("LD", ac, 0, ac, "load ac with value of id "+node.Name())
-	} else {
-		g.emitRM("LD", ac, initFO-memLoc.Get(), ac2, "load ac with value of id "+node.Name())
-	}
-	g.emitPush("allocate id " + node.Name())
-	g.emitRM("ST", ac, 0, sp, "store id from ac onto stack")
+	g.getValue(node)
 }
 
 func (g *Gen) genParam(node syntree.Node) {
@@ -495,6 +570,8 @@ func (g *Gen) genMain() {
 	}
 	g.emitPush("allocate space for fake return pc")
 	g.emitRM("ST", zero, 0, sp, "store fake return pc onto stack")
+	g.emitPush("allocate space for fake first param address")
+	g.emitRM("ST", zero, 0, sp, "store fake first param address")
 	g.emitRM("LD", pc, 0-memLoc.Get(), gp, "jumping to main")
 }
 

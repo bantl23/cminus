@@ -1,7 +1,10 @@
 void funcA(int i, int j)
 {
+  int k;
+  k = 99;
   output(i);
   output(j);
+  output(k);
 }
 
 void main(void)
@@ -11,5 +14,6 @@ void main(void)
   i = 1;
   j = 2;
   funcA(i, j);
+  funcA(1, 2);
   output(3);
 }
