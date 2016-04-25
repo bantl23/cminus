@@ -1,0 +1,20 @@
+void arr (int a[])
+{
+  output(a[0]);
+  output(a[1]);
+
+  a[0] = 555;
+  a[1] = 999;
+}
+
+void main(void)
+{
+  int i[2];
+  i[0] = 55;
+  i[1] = 99;
+
+  arr(i);
+
+  output(i[0]);
+  output(i[1]);
+}
