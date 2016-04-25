@@ -102,7 +102,8 @@ func (g *Gen) emitComment(comment string) {
 }
 
 func (g *Gen) emitSkip(amount int) int {
-	log.CodeLog.Printf("skipping %d amount\n", amount)
+	out := fmt.Sprintf("skipping %d amount", amount)
+	g.emitComment(out)
 	i := g.loc
 	g.loc = g.loc + amount
 	if g.highLoc < g.loc {
@@ -112,7 +113,8 @@ func (g *Gen) emitSkip(amount int) int {
 }
 
 func (g *Gen) emitBackup(loc int) {
-	log.CodeLog.Printf("backing up to %d\n", loc)
+	out := fmt.Sprintf("backing up to %d", loc)
+	g.emitComment(out)
 	if loc > g.highLoc {
 		log.ErrorLog.Printf(">>>>> Error in emitBackup\n")
 	}
@@ -120,7 +122,8 @@ func (g *Gen) emitBackup(loc int) {
 }
 
 func (g *Gen) emitRestore() {
-	log.CodeLog.Printf("restoring to %d\n", g.highLoc)
+	out := fmt.Sprintf("restoring to %d", g.highLoc)
+	g.emitComment(out)
 	g.loc = g.highLoc
 }
 
@@ -129,7 +132,8 @@ func (g *Gen) getValue(node syntree.Node) {
 	depth := 0
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
 		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -158,7 +162,8 @@ func (g *Gen) getAddress(node syntree.Node) {
 	depth := 0
 	if symtbl.GlbSymTblMap[node.SymKey()].HasId(node.Name()) {
 		memLoc, depth = symtbl.GlbSymTblMap[node.SymKey()].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d", node.Name(), memLoc, depth)
+		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -219,7 +224,8 @@ func (g *Gen) genFunction(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
 		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
+		out := fmt.Sprintf("found %s at %+v offset from gp", node.Name(), memLoc)
+		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -378,7 +384,8 @@ func (g *Gen) genCall(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
 		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
-		log.CodeLog.Printf("found %s at %+v offset from gp", node.Name(), memLoc)
+		out := fmt.Sprintf("found %s at %+v offset from gp", node.Name(), memLoc)
+		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -534,7 +541,8 @@ func (g *Gen) genMain() {
 	memLoc := symtbl.MemLoc(0)
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId("main") {
 		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc("main")
-		log.CodeLog.Printf("found main at %+v offset from gp", memLoc)
+		out := fmt.Sprintf("found main at %+v offset from gp", memLoc)
+		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
 	}
@@ -551,7 +559,8 @@ func (g *Gen) getHalt() {
 
 func (g *Gen) gen(node syntree.Node) {
 	if node != nil {
-		log.CodeLog.Printf("=> %+v", node)
+		out := fmt.Sprintf("=> %+v", node)
+		g.emitComment(out)
 		if node.IsCompound() {
 			g.genCompound(node)
 		} else if node.IsFunc() {
@@ -577,7 +586,8 @@ func (g *Gen) gen(node syntree.Node) {
 		} else if node.IsVar() {
 			g.genVar(node)
 		}
-		log.CodeLog.Printf("<= %+v", node)
+		out = fmt.Sprintf("<= %+v", node)
+		g.emitComment(out)
 		g.gen(node.Sibling())
 	}
 }
