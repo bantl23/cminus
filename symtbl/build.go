@@ -46,7 +46,7 @@ func prebuild(node syntree.Node) {
 	} else if node.IsParam() && node.IsInt() {
 		InsertVarParamInSymTbl(curSymTblLst, node)
 	}
-	if node.IsFunc() || node.IsSelection() || node.IsIteration() {
+	if node.IsFunc() || node.IsCompound() {
 		curSymTblLst = NewSymTblLst(node.Name(), curSymTblLst)
 		GlbSymTblMap[curSymTblLst.Scope()] = curSymTblLst
 	}
@@ -55,7 +55,7 @@ func prebuild(node syntree.Node) {
 
 func postbuild(node syntree.Node) {
 	log.AnalyzeLog.Printf("postbuild %+v", node)
-	if node.IsFunc() || node.IsSelection() || node.IsIteration() {
+	if node.IsFunc() || node.IsCompound() {
 		curSymTblLst = curSymTblLst.Parent()
 	}
 }
