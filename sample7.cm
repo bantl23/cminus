@@ -13,6 +13,9 @@ void main(void)
   i[0] = 55;
   i[1] = 99;
 
+  output(i[0]);
+  output(i[1]);
+
   arr(i);
 
   output(i[0]);
