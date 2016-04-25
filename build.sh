@@ -13,3 +13,4 @@ go build
 ./cminus sample8.cm
 ./cminus sample9.cm
 ./cminus sample10.cm
+./cminus sample11.cm
