@@ -1,0 +1,16 @@
+int func(int a, int b, int c)
+{
+  int x;
+  int y;
+  return 999;
+}
+
+void main(void)
+{
+  int i;
+  int j;
+  i = 1;
+  j = 2;
+  i = func(j, j, j);
+  output(i);
+}

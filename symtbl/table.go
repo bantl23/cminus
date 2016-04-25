@@ -237,6 +237,19 @@ func (s *SymTblLst) GetIdArgs(variable string) []SymbolType {
 	return typ
 }
 
+func (s *SymTblLst) GetReturnType(variable string) ReturnType {
+	typ := UNK_RET_TYPE
+	lst := s
+	for lst != nil {
+		if val, ok := lst.symTbl[variable]; ok {
+			typ = val.RetType()
+			break
+		}
+		lst = lst.parent
+	}
+	return typ
+}
+
 func PrintTableList(s *SymTblLst, indent int) {
 	indent += 4
 	if s != nil {

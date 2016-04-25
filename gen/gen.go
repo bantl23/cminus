@@ -333,6 +333,10 @@ func (g *Gen) genIteration(node syntree.Node) {
 func (g *Gen) genReturn(node syntree.Node) {
 	n0 := node.Children()[0]
 	g.gen(n0)
+	g.emitRM("LD", ac, 0, sp, "load return value from sp into ac")
+	g.emitPop("deallocate return value")
+	g.emitPush("allocate returnValue")
+	g.emitRM("ST", ac, 0, sp, "store return value from ac onto sp")
 	g.emitRM("LD", pc, retFO, fp, "return to caller")
 }
 
@@ -382,9 +386,13 @@ func (g *Gen) genAssign(node syntree.Node) {
 
 func (g *Gen) genCall(node syntree.Node) {
 	memLoc := symtbl.MemLoc(0)
+	retType := symtbl.UNK_RET_TYPE
 	if symtbl.GlbSymTblMap[symtbl.ROOT_KEY].HasId(node.Name()) {
 		memLoc, _ = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetMemLoc(node.Name())
 		out := fmt.Sprintf("found %s at %+v offset from gp", node.Name(), memLoc)
+		g.emitComment(out)
+		retType = symtbl.GlbSymTblMap[symtbl.ROOT_KEY].GetReturnType(node.Name())
+		out = fmt.Sprintf("has return type %s", retType)
 		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
@@ -413,10 +421,21 @@ func (g *Gen) genCall(node syntree.Node) {
 		g.emitRM("ST", ac, 0, sp, "store return pc onto stack")
 		g.emitRM("LD", pc, 0-memLoc.Get(), gp, "func: jump func "+node.Name())
 
+		if retType == symtbl.INT_RET_TYPE {
+			g.emitRM("LD", ac, 0, sp, "load return value from sp into ac")
+			g.emitPop("deallocate return value")
+		}
+
 		n0 = node.Children()[0]
 		for n0 != nil {
-			g.emitPop("deallocate param " + n0.Name())
+			comment := fmt.Sprintf("deallocate arg %s (%d)", n0.Name(), n0.Value())
+			g.emitPop(comment)
 			n0 = n0.Sibling()
+		}
+
+		if retType == symtbl.INT_RET_TYPE {
+			g.emitPush("allocate return value")
+			g.emitRM("ST", ac, 0, sp, "store return value from ac onto stack")
 		}
 	}
 }
