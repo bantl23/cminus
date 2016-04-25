@@ -1,22 +1,17 @@
-int gcd (int u, int v)
+void gcd (int i, int j)
 {
-  int w;
-  output(u);
-  output(v);
-  w = u + v;
-  output(w);
-  return w;
+  int a;
+  int b;
+  output(i);
+  output(j);
 }
 
 void main(void)
 {
   int x;
   int y;
-  int z;
-  x = input();
-  output(x);
-  y = input();
-  output(y);
-  z = gcd(x,y);
-  output(z);
+  x = 55;
+  y = 99;
+  gcd(1,2);
+  gcd(x,y);
 }

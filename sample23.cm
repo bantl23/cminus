@@ -1,6 +1,8 @@
 int funcA(void)
 {
-  return 1;
+  int x;
+  x = 55;
+  return x;
 }
 
 void main(void)
