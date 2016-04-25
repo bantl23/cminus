@@ -1,0 +1,20 @@
+void main(void)
+{
+  int i;
+  int j;
+  int k;
+  i = 6;
+  output(i);
+  j = 2;
+  output(j);
+  k = 100;
+  output(k);
+  k = i * j;
+  output(k);
+  k = i / j;
+  output(k);
+  k = i + j;
+  output(k);
+  k = i - j;
+  output(k);
+}

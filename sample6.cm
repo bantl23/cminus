@@ -1,0 +1,17 @@
+void gcd (int i, int j)
+{
+  int a;
+  int b;
+  output(i);
+  output(j);
+}
+
+void main(void)
+{
+  int x;
+  int y;
+  x = 55;
+  y = 99;
+  gcd(1,2);
+  gcd(x,y);
+}

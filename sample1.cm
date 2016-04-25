@@ -1,0 +1,59 @@
+void main(void)
+{
+  int i;
+  int j;
+  i = 1;
+  j = 2;
+  if (i != j)
+  {
+    output(1);
+  }
+
+  output(3);
+  output(4);
+
+  if (i != j)
+  {
+    output(5);
+  }
+  else
+  {
+    output(6);
+  }
+
+  output(7);
+
+  if (i == i)
+  {
+    output(8);
+  }
+
+  if (i <= i)
+  {
+    output(9);
+  }
+
+  if (i >= i)
+  {
+    output(10);
+  }
+
+  if (j > i)
+  {
+    output(100);
+  }
+
+  if (i < j)
+  {
+    output(11);
+  }
+
+  if (j > i)
+  {
+    output(12);
+  }
+  else
+  {
+    output(13);
+  }
+}

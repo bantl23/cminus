@@ -1,0 +1,28 @@
+void funcA(void)
+{
+  output(1);
+}
+
+void funcB(void)
+{
+  funcA();
+  output(2);
+}
+
+void funcC(void)
+{
+  funcB();
+  output(3);
+}
+
+void funcD(void)
+{
+  funcC();
+  output(4);
+}
+
+void main(void)
+{
+  funcD();
+  output(5);
+}

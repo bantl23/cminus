@@ -1,0 +1,14 @@
+void main(void)
+{
+  int i;
+  i = 55;
+  output(i);
+  
+  {
+    int i;
+    i = 99;
+    output(i);
+  }
+
+  output(i);
+}

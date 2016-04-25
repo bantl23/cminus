@@ -1,0 +1,24 @@
+int gcd (int i, int j)
+{
+  output(i);
+  output(j);
+  return 5;
+}
+
+void main(void)
+{
+  int x;
+  int y;
+  x = 111;
+  y = 222;
+  gcd(1,2);
+  gcd(x,y);
+  gcd(11, 11);
+  gcd(22, 22);
+  gcd(33, 33);
+  gcd(44, 44);
+  gcd(55, 55);
+
+  output(x);
+  output(y);
+}
