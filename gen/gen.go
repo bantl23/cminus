@@ -136,7 +136,7 @@ func (g Gen) getInfo(key string, symbol string) (int, int, symtbl.ReturnType) {
 	if symtbl.GlbSymTblMap[key].HasId(symbol) {
 		memLoc, depth = symtbl.GlbSymTblMap[key].GetMemLoc(symbol)
 		retType = symtbl.GlbSymTblMap[key].GetReturnType(symbol)
-		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d", symbol, memLoc, depth)
+		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d [%s]", symbol, memLoc, depth, key)
 		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id")
@@ -227,10 +227,11 @@ func (g *Gen) genFunction(node syntree.Node) {
 	for n0 != nil {
 		if n0.ExpType() == syntree.INT_EXP_TYPE {
 			if n0.IsArray() {
-				g.emitRM("LD", ac, length-offset-1, ac1, "load param value")
-			} else {
-				g.emitRM("LD", ac, length-offset-1, ac1, "load param value")
+				g.emitRM("LDA", ac, length-offset-1, ac1, "load param value")
 				g.emitRM("ST", ac, initFO-offset, fp, "store param value")
+			} else {
+				g.emitRM("LD", ac, length-offset-1, ac1, "load param array value")
+				g.emitRM("ST", ac, initFO-offset, fp, "store param array value")
 			}
 			offset = offset + 1
 		}

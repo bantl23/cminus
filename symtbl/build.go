@@ -18,7 +18,7 @@ func GlbPrintTableMap() {
 }
 
 func NewGlbSymTblLst() {
-	GlbSymTblLst = NewSymTblLst(ROOT_SCOPE, nil)
+	GlbSymTblLst = NewSymTblLst(ROOT_SCOPE, nil, 0)
 	GlbSymTblMap[GlbSymTblLst.Scope()] = GlbSymTblLst
 	curSymTblLst = GlbSymTblLst
 	input := syntree.NewStmtFunctionInputNode()
@@ -47,7 +47,12 @@ func prebuild(node syntree.Node) {
 		InsertVarParamInSymTbl(curSymTblLst, node)
 	}
 	if node.IsFunc() || node.IsCompound() {
-		curSymTblLst = NewSymTblLst(node.Name(), curSymTblLst)
+		if node.IsFunc() {
+			curSymTblLst = NewSymTblLst(node.Name(), curSymTblLst, 0)
+		} else {
+			memLoc := curSymTblLst.BaseMemLoc().Get()
+			curSymTblLst = NewSymTblLst(node.Name(), curSymTblLst, memLoc)
+		}
 		GlbSymTblMap[curSymTblLst.Scope()] = curSymTblLst
 	}
 	node.SetSymKey(curSymTblLst.Scope())

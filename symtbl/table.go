@@ -119,14 +119,14 @@ func PrintTableMap(s SymTblLstMap, indent int) {
 	}
 }
 
-func NewSymTblLst(scope string, parent *SymTblLst) *SymTblLst {
+func NewSymTblLst(scope string, parent *SymTblLst, memLoc int) *SymTblLst {
 	s := new(SymTblLst)
 	if scope == "" {
 		scope = INNER_SCOPE + strconv.FormatInt(int64(INNER_COUNT), 10)
 		INNER_COUNT++
 	}
 	s.scope = SCOPE_SEPARATOR + scope
-	s.baseMemLoc = MemLoc(0)
+	s.baseMemLoc = MemLoc(memLoc)
 	s.symTbl = *NewSymTbl()
 	s.parent = parent
 	s.children = nil
