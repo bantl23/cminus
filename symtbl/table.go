@@ -8,6 +8,7 @@ import (
 
 type SymTblVal struct {
 	memLoc  MemLoc
+	idType  IdentifierType
 	symType SymbolType
 	size    int
 	args    []SymbolType
@@ -15,9 +16,10 @@ type SymTblVal struct {
 	lines   []int
 }
 
-func NewSymTblVal(memLoc MemLoc, symType SymbolType, size int, retType ReturnType, line int) *SymTblVal {
+func NewSymTblVal(memLoc MemLoc, idType IdentifierType, symType SymbolType, size int, retType ReturnType, line int) *SymTblVal {
 	s := new(SymTblVal)
 	s.memLoc = memLoc
+	s.idType = idType
 	s.symType = symType
 	s.size = size
 	s.retType = retType
@@ -36,6 +38,10 @@ func NewSymTbl() *SymTbl {
 
 func (s SymTblVal) MemLoc() MemLoc {
 	return s.memLoc
+}
+
+func (s SymTblVal) IdType() IdentifierType {
+	return s.idType
 }
 
 func (s SymTblVal) SymType() SymbolType {
@@ -71,17 +77,17 @@ func PrintTable(s *SymTbl, indent int) {
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
-		fmt.Printf("Variable Name Memory Location Type Size RType Args Lines\n")
+		fmt.Printf("Variable Name Memory Location Type Size IType RType Args Lines\n")
 		for i := 0; i < indent; i++ {
 			fmt.Print(" ")
 		}
-		fmt.Printf("============= =============== ==== ==== ===== ==== =====\n")
+		fmt.Printf("============= =============== ==== ==== ===== ===== ==== =====\n")
 		for k, v := range *s {
 			for i := 0; i < indent; i++ {
 				fmt.Print(" ")
 			}
 			if v != nil {
-				fmt.Printf("%13s 0x%013x %4s %4d %5s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.Size(), v.RetType(), v.Args(), v.Lines())
+				fmt.Printf("%13s 0x%013x %4s %4d %5s %5s %+v %+v\n", k, v.MemLoc(), v.SymType(), v.Size(), v.IdType(), v.RetType(), v.Args(), v.Lines())
 			} else {
 				fmt.Printf("%13s\n", k)
 			}
@@ -182,6 +188,28 @@ func (s *SymTblLst) HasId(variable string) bool {
 	return has
 }
 
+func (s *SymTblLst) GetInfo(variable string) (int, int, IdentifierType, SymbolType, ReturnType) {
+	memLoc := MemLoc(-1)
+	idType := UNK_ID_TYPE
+	symType := UNK_SYM_TYPE
+	retType := UNK_RET_TYPE
+	lst := s
+	depth := 0
+	for lst != nil {
+		if val, ok := lst.symTbl[variable]; ok {
+			memLoc = val.MemLoc()
+			idType = val.IdType()
+			symType = val.SymType()
+			retType = val.RetType()
+			break
+		}
+		depth = depth + 1
+		lst = lst.parent
+	}
+	depth = depth - strings.Count(s.scope, "$inner")
+	return memLoc.Get(), depth, idType, symType, retType
+}
+
 func (s *SymTblLst) GetMemLoc(variable string) (MemLoc, int) {
 	memLoc := MemLoc(-1)
 	lst := s
@@ -211,12 +239,12 @@ func (s *SymTblLst) GetSize(variable string) int {
 	return size
 }
 
-func (s *SymTblLst) GetIdType(variable string) SymbolType {
-	typ := UNK_SYM_TYPE
+func (s *SymTblLst) GetIdentifierType(variable string) IdentifierType {
+	typ := UNK_ID_TYPE
 	lst := s
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
-			typ = val.SymType()
+			typ = val.IdType()
 			break
 		}
 		lst = lst.parent
@@ -224,12 +252,25 @@ func (s *SymTblLst) GetIdType(variable string) SymbolType {
 	return typ
 }
 
-func (s *SymTblLst) GetIdArgs(variable string) []SymbolType {
+func (s *SymTblLst) GetSymbolArgs(variable string) []SymbolType {
 	var typ []SymbolType
 	lst := s
 	for lst != nil {
 		if val, ok := lst.symTbl[variable]; ok {
 			typ = val.Args()
+			break
+		}
+		lst = lst.parent
+	}
+	return typ
+}
+
+func (s *SymTblLst) GetSymbolType(variable string) SymbolType {
+	typ := UNK_SYM_TYPE
+	lst := s
+	for lst != nil {
+		if val, ok := lst.symTbl[variable]; ok {
+			typ = val.SymType()
 			break
 		}
 		lst = lst.parent

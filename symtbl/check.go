@@ -80,11 +80,11 @@ func CheckFuncTypes(node syntree.Node) {
 			sib := node.Children()[0]
 			var sibSlice []SymbolType
 			for sib != nil {
-				sym := GlbSymTblMap[sib.SymKey()].GetIdType(sib.Name())
+				sym := GlbSymTblMap[sib.SymKey()].GetSymbolType(sib.Name())
 				sibSlice = append(sibSlice, sym)
 				sib = sib.Sibling()
 			}
-			funSlice := GlbSymTblMap[node.SymKey()].GetIdArgs(node.Name())
+			funSlice := GlbSymTblMap[node.SymKey()].GetSymbolArgs(node.Name())
 			if sibSlice == nil && funSlice != nil {
 				log.ErrorLog.Printf(">>>>> Error calling %s with 0 arguments but takes %d arguments [%+v]", node.Name(), len(funSlice), node.Pos())
 				CheckErr = true

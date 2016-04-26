@@ -18,7 +18,7 @@ func InsertFuncInSymTbl(table *SymTblLst, node syntree.Node) {
 		}
 		memLoc := table.BaseMemLoc()
 		size := 1
-		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, FUNC_SYM_TYPE, size, r, node.Pos().Row())
+		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, UNK_ID_TYPE, FUNC_SYM_TYPE, size, r, node.Pos().Row())
 		table.IncBaseMemLoc(size)
 
 		if len(node.Children()) > 0 {
@@ -42,19 +42,25 @@ func InsertVarParamInSymTbl(table *SymTblLst, node syntree.Node) {
 	if value, ok := table.SymTbl()[node.Name()]; ok {
 		value.AddLine(node.Pos().Row())
 	} else {
-		t := UNK_SYM_TYPE
+		symType := UNK_SYM_TYPE
 		size := 1
 		if node.IsArray() {
-			t = ARR_SYM_TYPE
+			symType = ARR_SYM_TYPE
 			if node.IsParam() == false {
 				size = node.Value()
 			}
 		} else if node.IsInt() {
-			t = INT_SYM_TYPE
+			symType = INT_SYM_TYPE
 			size = 1
 		}
+		idType := UNK_ID_TYPE
+		if node.IsParam() {
+			idType = PARAM_ID_TYPE
+		} else if node.IsVar() {
+			idType = VAR_ID_TYPE
+		}
 		memLoc := table.BaseMemLoc()
-		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, t, size, UNK_RET_TYPE, node.Pos().Row())
+		table.SymTbl()[node.Name()] = NewSymTblVal(memLoc, idType, symType, size, UNK_RET_TYPE, node.Pos().Row())
 		table.IncBaseMemLoc(size)
 	}
 }
