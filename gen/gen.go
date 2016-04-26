@@ -228,7 +228,6 @@ func (g *Gen) genFunction(node syntree.Node) {
 		if n0.ExpType() == syntree.INT_EXP_TYPE {
 			if n0.IsArray() {
 				g.emitRM("LD", ac, length-offset-1, ac1, "load param value")
-				// TODO
 			} else {
 				g.emitRM("LD", ac, length-offset-1, ac1, "load param value")
 				g.emitRM("ST", ac, initFO-offset, fp, "store param value")
@@ -291,6 +290,8 @@ func (g *Gen) genIteration(node syntree.Node) {
 func (g *Gen) genReturn(node syntree.Node) {
 	n0 := node.Children()[0]
 	g.gen(n0)
+	g.emitRM("LD", sp, -1, sp, "set sp to end of old activation")
+	g.emitRM("LD", fp, 0, fp, "set fp to old fp")
 	g.emitRM("LD", pc, retFO, fp, "return to caller")
 }
 
