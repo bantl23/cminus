@@ -1,11 +1,28 @@
-int funcA(void)
+int funcA(int a)
 {
-  int x;
-  x = 55;
-  return x;
+  a = a + 1;
+  output(a);
+  return a;
+}
+
+int funcB(int b)
+{
+  b = b + 1;
+  output(b);
+  return b;
+}
+
+int funcC(int c)
+{
+  c = c + 1;
+  output(c);
+  return c;
 }
 
 void main(void)
 {
-  output(funcA());
+  int i;
+  i = 0;
+  i = funcC(funcB(funcA(i)));
+  output(i);
 }

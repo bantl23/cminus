@@ -5,6 +5,9 @@ void arr (int a[], int b[])
 
   a[0] = 555;
   b[1] = 999;
+
+  output(a[0]);
+  output(b[1]);
 }
 
 void main(void)
