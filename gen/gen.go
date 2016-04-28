@@ -137,7 +137,15 @@ func (g Gen) getInfo(node syntree.Node, key string, symbol string) (int, int, sy
 	retType := symtbl.UNK_RET_TYPE
 	if symtbl.GlbSymTblMap[key].HasId(symbol) {
 		memLoc, depth, idType, symType, retType = symtbl.GlbSymTblMap[key].GetInfo(symbol)
-		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d [idType=%+v, symType=%+v, retType=%+v, key=%s]", symbol, memLoc, depth, idType, symType, retType, key)
+		out := fmt.Sprintf("found %s at %+v offset from fp at depth %d", symbol, memLoc, depth)
+		g.emitComment(out)
+		out = fmt.Sprintf("  idType=%+v", idType)
+		g.emitComment(out)
+		out = fmt.Sprintf("  symType=%+v", symType)
+		g.emitComment(out)
+		out = fmt.Sprintf("  retType=%+v", retType)
+		g.emitComment(out)
+		out = fmt.Sprintf("  key=%s", key)
 		g.emitComment(out)
 	} else {
 		log.ErrorLog.Printf("error could not find id %+v [key=%s,sym=%s]", node, key, symbol)
@@ -275,7 +283,7 @@ func (g *Gen) genFunction(node syntree.Node) {
 
 	g.emitBackup(sav0)
 	g.emitRM("LDC", ac, sav0+3, zero, "save pc loc of "+node.Name())
-	g.emitRM("ST", ac, 0-memLoc, gp, "store pc loc of "+node.Name())
+	g.emitRM("ST", ac, initFO-memLoc, gp, "store pc loc of "+node.Name())
 	g.emitRM("LDA", pc, sav1, zero, "func: jump to end")
 	g.emitRestore()
 }
@@ -302,7 +310,7 @@ func (g *Gen) genIteration(node syntree.Node) {
 func (g *Gen) genReturn(node syntree.Node) {
 	n0 := node.Children()[0]
 	g.gen(n0)
-	g.emitRM("LDA", sp, -1, fp, "set sp to end of old activation")
+	g.emitRM("LDA", sp, 1, fp, "set sp to old fp")
 	g.emitRO("ADD", ac1, fp, zero, "save fp")
 	g.emitRM("LD", fp, 0, fp, "set fp to old fp")
 	g.emitRM("LD", pc, retFO, ac1, "return to caller")
@@ -369,8 +377,8 @@ func (g *Gen) genCall(node syntree.Node) {
 				comment := fmt.Sprintf("store arg %s (%d)", n0.Name(), n0.Value())
 				g.emitRM("ST", ac, 0, sp, comment)
 			} else {
-				_, _, _, symTbl, _ := g.getInfo(n0, n0.SymKey(), n0.Name())
-				if n0.IsId() && len(n0.Children()) == 0 && symTbl == symtbl.ARR_SYM_TYPE {
+				_, _, idType, symTbl, _ := g.getInfo(n0, n0.SymKey(), n0.Name())
+				if n0.IsId() && len(n0.Children()) == 0 && symTbl == symtbl.ARR_SYM_TYPE && idType == symtbl.VAR_ID_TYPE {
 					g.getAddress(n0)
 					g.emitPush("allocate pass by reference array arg")
 					comment := fmt.Sprintf("store arg address %s (%d)", n0.Name(), n0.Value())
@@ -390,7 +398,7 @@ func (g *Gen) genCall(node syntree.Node) {
 		g.emitRM("LDC", ac, ret, 0, "load return pc")
 		g.emitPush("allocate space for return pc")
 		g.emitRM("ST", ac, 0, sp, "store return pc onto stack")
-		g.emitRM("LD", pc, 0-memLoc, gp, "func: jump func "+node.Name())
+		g.emitRM("LD", pc, initFO-memLoc, gp, "func: jump func "+node.Name())
 
 		followSibling = false
 		n0 = node.Children()[0]
@@ -484,7 +492,7 @@ func (g *Gen) genPrelude() {
 	g.emitComment("prelude beg")
 	g.emitRM("LD", gp, 0, ac, "load gp with maxaddress")
 	g.emitRM("LDA", fp, 0, gp, "copy gp into fp")
-	g.emitRM("LDA", sp, 0, gp, "copy gp into sp")
+	g.emitRM("LDA", sp, -1, gp, "set sp to fake pc loc")
 	g.emitRM("ST", ac, 0, ac, "clear location 0")
 	g.emitRM("LDC", zero, 0, 0, "set zero")
 	g.emitRM("LDC", ac, 0, 0, "clear ac")
@@ -509,7 +517,7 @@ func (g *Gen) genMain() {
 	memLoc, _, _, _, _ := g.getInfo(nil, symtbl.ROOT_KEY, "main")
 	g.emitPush("allocate space for fake return pc")
 	g.emitRM("ST", zero, 0, sp, "store fake return pc onto stack")
-	g.emitRM("LD", pc, 0-memLoc, gp, "jumping to main")
+	g.emitRM("LD", pc, initFO-memLoc, gp, "jumping to main")
 	g.emitComment("main end")
 }
 
