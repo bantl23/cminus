@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bantl23/cminus/gen"
 	"github.com/bantl23/cminus/log"
+	"github.com/bantl23/cminus/opt"
 	"github.com/bantl23/cminus/symtbl"
 	"github.com/bantl23/cminus/syntree"
 	"github.com/codegangsta/cli"
@@ -14,6 +15,7 @@ import (
 func main() {
 	parse := true
 	analyze := true
+	optimize := true
 	code := true
 	print_source_code := false
 	print_parse_tree := false
@@ -39,6 +41,11 @@ func main() {
 			Name:        "analyze",
 			Usage:       "Enable or disable code analysis",
 			Destination: &analyze,
+		},
+		cli.BoolTFlag{
+			Name:        "optimize",
+			Usage:       "Enable or disable code optimization",
+			Destination: &optimize,
 		},
 		cli.BoolTFlag{
 			Name:        "code",
@@ -163,6 +170,10 @@ func main() {
 						log.InfoLog.Printf("analyzing")
 						log.InfoLog.Printf("=========")
 						symtbl.Analyze(rootNode)
+						if optimize == true {
+							log.InfoLog.Printf("optimzing")
+							opt.Optimize(rootNode)
+						}
 						if code == true {
 							log.InfoLog.Printf("generating code")
 							log.InfoLog.Printf("===============")
