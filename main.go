@@ -26,7 +26,8 @@ func main() {
 	trace_analyze := false
 	trace_optimize := false
 	trace_codegen := false
-	optimize_parse_tree := true
+	optimize_constant_folding := true
+	optimize_constant_propagation := true
 
 	app := cli.NewApp()
 	app.Name = "cminus"
@@ -99,9 +100,14 @@ func main() {
 			Destination: &print_machine_code,
 		},
 		cli.BoolTFlag{
-			Name:        "optimize-parse-tree",
-			Usage:       "Enable or disable parse tree optimization",
-			Destination: &optimize_parse_tree,
+			Name:        "optimize-constant-folding",
+			Usage:       "Enable or disable constant folding optimization",
+			Destination: &optimize_constant_folding,
+		},
+		cli.BoolTFlag{
+			Name:        "optimize-constant-propagation",
+			Usage:       "Enable or disable constant propagation optimization",
+			Destination: &optimize_constant_propagation,
 		},
 	}
 	app.Action = func(c *cli.Context) {
@@ -148,15 +154,36 @@ func main() {
 						syntree.PrintNode(rootNode, 0)
 						fmt.Println("<<<<")
 					}
-					if optimize_parse_tree == true {
-						log.InfoLog.Printf("optimizing parse tree")
-						log.InfoLog.Printf("=====================")
-						opt.OptParseTree(rootNode)
+					if optimize_constant_folding == true && optimize_constant_propagation == true {
+						log.InfoLog.Printf("optimizing: constant folding and constant propagation")
+						log.InfoLog.Printf("=====================================================")
+						opt.OptConstantFoldingAndConstantPropagation(rootNode)
 						if print_parse_tree == true {
 							fmt.Println(">>>>")
 							syntree.PrintNode(rootNode, 0)
 							fmt.Println("<<<<")
 						}
+					} else if optimize_constant_folding == true {
+						log.InfoLog.Printf("optimizing: constant folding")
+						log.InfoLog.Printf("============================")
+						opt.OptConstantFolding(rootNode)
+						if print_parse_tree == true {
+							fmt.Println(">>>>")
+							syntree.PrintNode(rootNode, 0)
+							fmt.Println("<<<<")
+						}
+					} else if optimize_constant_propagation == true {
+						log.InfoLog.Printf("optimizing: constant propagation")
+						log.InfoLog.Printf("================================")
+						opt.OptConstantPropagation(rootNode)
+						if print_parse_tree == true {
+							fmt.Println(">>>>")
+							syntree.PrintNode(rootNode, 0)
+							fmt.Println("<<<<")
+						}
+					}
+
+					if optimize_constant_folding == true {
 					}
 					if analyze == true {
 						log.InfoLog.Printf("building symbol table")
