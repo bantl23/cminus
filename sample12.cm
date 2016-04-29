@@ -1,0 +1,26 @@
+void main(void)
+{
+  int i;
+  int j;
+
+  output(11111);
+
+  i = 1 + 4 / 2 * 8 - 2;
+  j = 15;
+
+  output(i);
+  output(j);
+
+  i = 5 + i;
+
+  output(i);
+
+  if (7 == 7)
+  {
+    output(22222);
+  }
+  else
+  {
+    output(33333);
+  }
+}
