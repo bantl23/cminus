@@ -1,3 +1,8 @@
+void test(int x)
+{
+  output(x);
+}
+
 void main(void)
 {
   int i;
@@ -8,12 +13,12 @@ void main(void)
   i = 1 + 4 / 2 * 8 - 2;
   j = 15;
 
-  output(i);
-  output(j);
+  test(i);
+  test(j);
 
-  i = 5 + i;
+  i = 5 + i + j;
 
-  output(i);
+  test(i);
 
   if (7 == 7)
   {

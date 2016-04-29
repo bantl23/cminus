@@ -116,7 +116,6 @@ var CONST_PROPAGATED bool = false
 
 func ConstantPropagation(node syntree.Node) {
 	if node != nil {
-		log.OptLog.Printf("PRENODE %+v", node)
 		if node.IsCompound() {
 			vals = make(map[string]int)
 		}
@@ -132,12 +131,9 @@ func ConstantPropagation(node syntree.Node) {
 			}
 			if containsLeftAssign == true {
 				delete(vals, id)
-				log.OptLog.Printf("+++++++++ DELETE %+v", vals)
 			}
-			log.OptLog.Printf("+++++++++++ ISASSIGN vals %+v", vals)
 		}
 		if node.IsId() {
-			log.OptLog.Printf("++++++++++ ISID %+v", node)
 			id := node.Name()
 			parent := node.Parent()
 			children := []int{}
@@ -155,7 +151,7 @@ func ConstantPropagation(node syntree.Node) {
 					if ok == true {
 						newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
 						node.Parent().Children()[idx] = newNode
-						log.OptLog.Printf("++++++++ UPDATED %+v", newNode)
+						log.OptLog.Printf("new node %+v", newNode)
 						CONST_PROPAGATED = true
 					}
 				}
@@ -164,10 +160,8 @@ func ConstantPropagation(node syntree.Node) {
 		if node.IsCompound() {
 			vals = nil
 		}
-		log.OptLog.Printf("POSTNODE %+v", node)
 		ConstantPropagation(node.Sibling())
 	}
-
 }
 
 var funcNode syntree.Node = nil
