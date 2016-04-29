@@ -12,6 +12,7 @@ var ErrorLog *log.Logger
 var ScanLog *log.Logger
 var ParseLog *log.Logger
 var AnalyzeLog *log.Logger
+var OptLog *log.Logger
 var CodeLog *log.Logger
 var DstLog *log.Logger
 

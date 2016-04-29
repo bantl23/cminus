@@ -5,10 +5,13 @@ import (
 )
 
 type Node interface {
+	Parent() Node
+	SetParent(Node)
 	Sibling() Node
 	SetSibling(Node)
 	Children() []Node
 	AddChild(Node)
+	ClearChildren()
 	Pos() Position
 	SetPos(int, int)
 	Name() string
@@ -29,8 +32,8 @@ type Node interface {
 	IsAssign() bool
 	IsSelection() bool
 	IsIteration() bool
-	IsLeft() bool
-	SetLeft(isLeft bool)
+	IsTail() bool
+	SetTail(tail bool)
 	ExpType() ExpressionType
 	TokType() TokenType
 	SymKey() string
@@ -39,10 +42,11 @@ type Node interface {
 
 type NodeBase struct {
 	position  Position
+	parent    Node
 	sibling   Node
 	children  []Node
 	symbolKey string
-	left      bool
+	tail      bool
 }
 
 func (n NodeBase) Pos() Position {
@@ -51,6 +55,14 @@ func (n NodeBase) Pos() Position {
 
 func (n *NodeBase) SetPos(row int, col int) {
 	n.position = Position{row, col}
+}
+
+func (n NodeBase) Parent() Node {
+	return n.parent
+}
+
+func (n *NodeBase) SetParent(parent Node) {
+	n.parent = parent
 }
 
 func (n NodeBase) Sibling() Node {
@@ -67,6 +79,10 @@ func (n NodeBase) Children() []Node {
 
 func (n *NodeBase) AddChild(child Node) {
 	n.children = append(n.children, child)
+}
+
+func (n *NodeBase) ClearChildren() {
+	n.children = nil
 }
 
 func (n NodeBase) ExpType() ExpressionType {
@@ -149,12 +165,12 @@ func (n NodeBase) IsIteration() bool {
 	return false
 }
 
-func (n NodeBase) IsLeft() bool {
-	return n.left
+func (n NodeBase) IsTail() bool {
+	return n.tail
 }
 
-func (n *NodeBase) SetLeft(isLeft bool) {
-	n.left = isLeft
+func (n *NodeBase) SetTail(tail bool) {
+	n.tail = tail
 }
 
 func (n NodeBase) SymKey() string {
@@ -166,6 +182,10 @@ func (n *NodeBase) SetSymKey(s string) {
 }
 
 func PrintNode(node Node, indent int) {
+	PrintNodePre(node, indent)
+}
+
+func PrintNodePre(node Node, indent int) {
 	indent += 4
 	for node != nil {
 		for i := 0; i < indent; i++ {
@@ -175,6 +195,39 @@ func PrintNode(node Node, indent int) {
 		for _, v := range node.Children() {
 			PrintNode(v, indent)
 		}
+		node = node.Sibling()
+	}
+	indent -= 4
+}
+
+func PrintNodeIn(node Node, indent int) {
+	indent += 4
+	for node != nil {
+		if node.Children() != nil && len(node.Children()) >= 1 {
+			PrintNode(node.Children()[0], indent)
+		}
+		for i := 0; i < indent; i++ {
+			fmt.Print(" ")
+		}
+		fmt.Printf("%+v\n", node)
+		if node.Children() != nil && len(node.Children()) >= 2 {
+			PrintNode(node.Children()[1], indent)
+		}
+		node = node.Sibling()
+	}
+	indent -= 4
+}
+
+func PrintNodePost(node Node, indent int) {
+	indent += 4
+	for node != nil {
+		for _, v := range node.Children() {
+			PrintNode(v, indent)
+		}
+		for i := 0; i < indent; i++ {
+			fmt.Print(" ")
+		}
+		fmt.Printf("%+v\n", node)
 		node = node.Sibling()
 	}
 	indent -= 4

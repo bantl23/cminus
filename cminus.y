@@ -101,6 +101,12 @@ fun_declaration     : type_specifier ID
                       LPAREN params RPAREN compound_stmt
                                                     {
                                                       $$ = syntree.NewStmtFunctionNode(savedPos.Row(), savedPos.Col(), $<exp>1, $<str>2)
+                                                      if $<node>5 != nil {
+                                                        $<node>5.SetParent($$)
+                                                      }
+                                                      if $<node>7 != nil {
+                                                        $<node>7.SetParent($$)
+                                                      }
                                                       $$.AddChild($<node>5)
                                                       $$.AddChild($<node>7)
                                                       log.ParseLog.Printf("fun_declaration0: %+v\n", $$)
@@ -150,6 +156,12 @@ param               : type_specifier ID             {
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
                                                     {
                                                       $$ = syntree.NewStmtCompoundNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $2 != nil {
+                                                        $2.SetParent($$)
+                                                      }
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($2)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("compound_stmt0: %+v\n", $$)
@@ -230,6 +242,12 @@ expression_stmt     : expression SEMI               {
 selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                                                     {
                                                       $$ = syntree.NewStmtSelectionNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
+                                                      if $5 != nil {
+                                                        $5.SetParent($$)
+                                                      }
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       $$.AddChild(nil)
@@ -238,6 +256,15 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                     | IF LPAREN expression RPAREN statement ELSE statement
                                                     {
                                                       $$ = syntree.NewStmtSelectionNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
+                                                      if $5 != nil {
+                                                        $5.SetParent($$)
+                                                      }
+                                                      if $7 != nil {
+                                                        $7.SetParent($$)
+                                                      }
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       $$.AddChild($7)
@@ -248,6 +275,12 @@ selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
 iteration_stmt      : WHILE LPAREN expression RPAREN statement
                                                     {
                                                       $$ = syntree.NewStmtIterationNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
+                                                      if $5 != nil {
+                                                        $5.SetParent($$)
+                                                      }
                                                       $$.AddChild($3)
                                                       $$.AddChild($5)
                                                       log.ParseLog.Printf("iteration_stmt0: %+v\n", $$)
@@ -261,6 +294,9 @@ return_stmt         : RETURN SEMI                   {
 																										}
                     | RETURN expression SEMI        {
                                                       $$ = syntree.NewStmtReturnNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $2 != nil {
+                                                        $2.SetParent($$)
+                                                      }
                                                       $$.AddChild($2)
                                                       log.ParseLog.Printf("return_stmt1: %+v\n", $$)
                                                     }
@@ -268,6 +304,12 @@ return_stmt         : RETURN SEMI                   {
 
 expression          : var ASSIGN expression         {
                                                       $$ = syntree.NewExpAssignNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col())
+                                                      if $1 != nil {
+                                                        $1.SetParent($$)
+                                                      }
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("expression0: %+v\n", $$)
@@ -285,6 +327,9 @@ var                 : ID                            {
                     | ID LBRACKET expression RBRACKET
                                                     {
                                                       $$ = syntree.NewExpIdArrayNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $1)
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("var1: %+v\n", $$)
                                                     }
@@ -293,6 +338,12 @@ var                 : ID                            {
 simple_expression   : additive_expression relop additive_expression
                                                     {
                                                       $$ = syntree.NewExpOpNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $2)
+                                                      if $1 != nil {
+                                                        $1.SetParent($$)
+                                                      }
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("simple_expression0: %+v\n", $$)
@@ -331,6 +382,12 @@ relop               : LT                            {
 additive_expression : additive_expression addop term
                                                     {
                                                       $$ = syntree.NewExpOpNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $2)
+                                                      if $1 != nil {
+                                                        $1.SetParent($$)
+                                                      }
+                                                      if $3 !=nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("additive_expression0: %+v\n", $$)
@@ -352,6 +409,12 @@ addop               : PLUS                          {
 
 term                : term mulop factor             {
                                                       $$ = syntree.NewExpOpNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $2)
+                                                      if $1 != nil {
+                                                        $1.SetParent($$)
+                                                      }
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($1)
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("term0: %+v\n", $$)
@@ -392,6 +455,9 @@ factor              : LPAREN expression RPAREN      {
 
 call                : ID LPAREN args RPAREN         {
                                                       $$ = syntree.NewExpCallNode(yylex.(*Lexer).Row(), yylex.(*Lexer).Col(), $1)
+                                                      if $3 != nil {
+                                                        $3.SetParent($$)
+                                                      }
                                                       $$.AddChild($3)
                                                       log.ParseLog.Printf("call0: %+v\n", $$)
 																										}

@@ -15,7 +15,6 @@ import (
 func main() {
 	parse := true
 	analyze := true
-	optimize := true
 	code := true
 	print_source_code := false
 	print_parse_tree := false
@@ -25,7 +24,9 @@ func main() {
 	trace_scan := false
 	trace_parse := false
 	trace_analyze := false
+	trace_optimize := false
 	trace_codegen := false
+	optimize_parse_tree := true
 
 	app := cli.NewApp()
 	app.Name = "cminus"
@@ -41,11 +42,6 @@ func main() {
 			Name:        "analyze",
 			Usage:       "Enable or disable code analysis",
 			Destination: &analyze,
-		},
-		cli.BoolTFlag{
-			Name:        "optimize",
-			Usage:       "Enable or disable code optimization",
-			Destination: &optimize,
 		},
 		cli.BoolTFlag{
 			Name:        "code",
@@ -66,6 +62,11 @@ func main() {
 			Name:        "trace-analyze",
 			Usage:       "Turn on tracing for analysis phase",
 			Destination: &trace_analyze,
+		},
+		cli.BoolFlag{
+			Name:        "trace-optimize",
+			Usage:       "Turn on tracing for optimize phase",
+			Destination: &trace_optimize,
 		},
 		cli.BoolFlag{
 			Name:        "trace-codegen",
@@ -97,6 +98,11 @@ func main() {
 			Usage:       "Print machine code",
 			Destination: &print_machine_code,
 		},
+		cli.BoolTFlag{
+			Name:        "optimize-parse-tree",
+			Usage:       "Enable or disable parse tree optimization",
+			Destination: &optimize_parse_tree,
+		},
 	}
 	app.Action = func(c *cli.Context) {
 
@@ -107,6 +113,7 @@ func main() {
 		log.ScanLog = log.InitLog(trace_scan)
 		log.ParseLog = log.InitLog(trace_parse)
 		log.AnalyzeLog = log.InitLog(trace_analyze)
+		log.OptLog = log.InitLog(trace_optimize)
 		log.CodeLog = log.InitLog(trace_codegen)
 
 		if len(c.Args()) == 0 {
@@ -141,6 +148,16 @@ func main() {
 						syntree.PrintNode(rootNode, 0)
 						fmt.Println("<<<<")
 					}
+					if optimize_parse_tree == true {
+						log.InfoLog.Printf("optimizing parse tree")
+						log.InfoLog.Printf("=====================")
+						opt.OptParseTree(rootNode)
+						if print_parse_tree == true {
+							fmt.Println(">>>>")
+							syntree.PrintNode(rootNode, 0)
+							fmt.Println("<<<<")
+						}
+					}
 					if analyze == true {
 						log.InfoLog.Printf("building symbol table")
 						log.InfoLog.Printf("=====================")
@@ -170,10 +187,6 @@ func main() {
 						log.InfoLog.Printf("analyzing")
 						log.InfoLog.Printf("=========")
 						symtbl.Analyze(rootNode)
-						if optimize == true {
-							log.InfoLog.Printf("optimzing")
-							opt.Optimize(rootNode)
-						}
 						if code == true {
 							log.InfoLog.Printf("generating code")
 							log.InfoLog.Printf("===============")

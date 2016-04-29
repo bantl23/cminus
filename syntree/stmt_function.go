@@ -18,6 +18,7 @@ func NewStmtFunctionNode(row int, col int, expType ExpressionType, name string) 
 	n.sibling = nil
 	n.children = nil
 	n.symbolKey = ""
+	n.tail = false
 	return n
 }
 
