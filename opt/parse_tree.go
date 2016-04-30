@@ -188,7 +188,7 @@ func RemoveDeadFuncs(node syntree.Node) bool {
 	var removeRoot bool = false
 	var prevNode syntree.Node = nil
 	for node != nil {
-		if funcMap[node.Name()] == false {
+		if node.IsFunc() && funcMap[node.Name()] == false {
 			log.OptLog.Printf("removing dead function %+v", node)
 			if prevNode != nil {
 				prevNode.SetSibling(node.Sibling())
