@@ -123,43 +123,43 @@ func ConstantPropagation(node syntree.Node) {
 			ConstantPropagation(n)
 		}
 		if node.IsAssign() {
-			id := node.Children()[0].Name()
-			if node.Children()[1].IsConst() {
-				value := node.Children()[1].Value()
-				vals[id] = value
-				containsLeftAssign = false
-			}
-			if containsLeftAssign == true {
-				delete(vals, id)
+			if node.Children()[0].IsArray() == false {
+				id := node.Children()[0].Name()
+				if node.Children()[1].IsConst() {
+					value := node.Children()[1].Value()
+					vals[id] = value
+					containsLeftAssign = false
+				}
+				if containsLeftAssign == true {
+					delete(vals, id)
+				}
 			}
 		}
-		if node.IsId() && node.IsArray() == false {
+		if node.IsId() {
 			id := node.Name()
 			parent := node.Parent()
 			if parent != nil {
 				if parent.IsCall() && parent.Name() != "output" {
-					/*
-						sib := node
-						var prevSib syntree.Node = nil
-						for sib != nil {
-							value, ok := vals[sib.Name()]
-							if ok == true {
-								if sib.Parent() != nil {
-									newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
-									newNode.SetSibling(sib.Sibling())
-									sib.Parent().Children()[0] = newNode
-									sib = newNode
-								} else {
-									newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
-									newNode.SetSibling(sib.Sibling())
-									prevSib.SetSibling(newNode)
-									sib = newNode
-								}
+					sib := node
+					var prevSib syntree.Node = nil
+					for sib != nil {
+						value, ok := vals[sib.Name()]
+						if ok == true {
+							if sib.Parent() != nil {
+								newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
+								newNode.SetSibling(sib.Sibling())
+								sib.Parent().Children()[0] = newNode
+								sib = newNode
+							} else {
+								newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
+								newNode.SetSibling(sib.Sibling())
+								prevSib.SetSibling(newNode)
+								sib = newNode
 							}
-							prevSib = sib
-							sib = sib.Sibling()
 						}
-					*/
+						prevSib = sib
+						sib = sib.Sibling()
+					}
 				} else {
 					children := []int{}
 					for i, c := range parent.Children() {
