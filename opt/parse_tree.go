@@ -229,28 +229,84 @@ func RemoveDeadFuncs(node syntree.Node) bool {
 	return removeRoot
 }
 
-var funcNode syntree.Node = nil
+var firstVar syntree.Node = nil
+var varMap map[string]bool = make(map[string]bool)
 
-func TailRecursion(node syntree.Node) {
+func RemoveDeadVars(node syntree.Node) {
 	if node != nil {
-		if node.IsFunc() {
-			funcNode = node
-		}
-		for _, n := range node.Children() {
-			TailRecursion(n)
-		}
-		if node.IsReturn() {
-			if funcNode != nil && node.Children() != nil && len(node.Children()) == 1 && node.Children()[0].IsCall() {
-				callName := node.Children()[0].Name()
-				if callName == funcNode.Name() {
-					funcNode.SetTail(true)
-					log.OptLog.Printf("Tail recursion found %+v", funcNode)
+		if node.IsCompound() {
+			if node.Children() != nil {
+				firstVar = node.Children()[0]
+				sib := node.Children()[0]
+				for sib != nil {
+					varMap[sib.Name()] = false
+					sib = sib.Sibling()
 				}
 			}
 		}
-		if node.IsFunc() {
-			funcNode = nil
+		if node.IsIteration() || node.IsSelection() {
+			varMap = make(map[string]bool)
 		}
-		node = node.Sibling()
+		for _, n := range node.Children() {
+			RemoveDeadVars(n)
+		}
+		if node.IsId() {
+			if node.Parent().IsAssign() && node.Parent().Children()[0] == node {
+			} else {
+				_, ok := varMap[node.Name()]
+				if ok == true {
+					varMap[node.Name()] = true
+				}
+			}
+		}
+		if node.IsCompound() {
+			sib := firstVar
+			var prevSib syntree.Node = nil
+			for sib != nil {
+				if varMap[sib.Name()] == false {
+					if sib.Parent() != nil {
+						parent := sib.Parent()
+						next := sib.Sibling()
+						parent.Children()[0] = next
+						if next != nil {
+							next.SetParent(parent)
+						}
+					} else {
+						prevSib.SetSibling(sib.Sibling())
+					}
+				}
+				prevSib = sib
+				sib = sib.Sibling()
+			}
+			if len(node.Children()) >= 1 {
+				var prevSib syntree.Node = nil
+				sib := node.Children()[1]
+				for sib != nil {
+					log.OptLog.Printf("=== %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
+					if varMap[sib.Children()[0].Name()] == false {
+						if sib.IsAssign() {
+							if sib.Parent() != nil {
+								parent := sib.Parent()
+								next := sib.Sibling()
+								log.OptLog.Printf("+++ %+v %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling(), parent.Children()[1])
+								parent.Children()[1] = next
+								if next != nil {
+									next.SetParent(parent)
+								}
+								log.OptLog.Printf("+++ %+v %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling(), parent.Children()[1])
+							} else {
+								log.OptLog.Printf("||| %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
+								prevSib.SetSibling(sib.Sibling())
+							}
+						}
+					}
+					log.OptLog.Printf("=== %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
+					prevSib = sib
+					sib = sib.Sibling()
+				}
+			}
+			varMap = make(map[string]bool)
+		}
+		RemoveDeadVars(node.Sibling())
 	}
 }

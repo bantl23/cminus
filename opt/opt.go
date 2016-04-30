@@ -26,6 +26,12 @@ func OptDeadFunctionRemoval(node syntree.Node) bool {
 	return removeRoot
 }
 
+func OptDeadVariableRemoval(node syntree.Node) {
+	log.OptLog.Printf("=> Optimize remove dead variables")
+	RemoveDeadVars(node)
+	log.OptLog.Printf("<= Optimize remove dead variables")
+}
+
 func OptConstantFoldingAndConstantPropagation(node syntree.Node) {
 	CONST_FOLDED = true
 	CONST_PROPAGATED = true
