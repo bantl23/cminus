@@ -151,8 +151,6 @@ func main() {
 					if optimize == true {
 						log.InfoLog.Printf("optimizing")
 						log.InfoLog.Printf("==========")
-						//opt.OptConstantFolding(rootNode)
-						//opt.OptConstantPropagation(rootNode)
 						opt.OptConstantFoldingAndConstantPropagation(rootNode)
 						removeRoot := opt.OptDeadFunctionRemoval(rootNode)
 						if removeRoot == true {

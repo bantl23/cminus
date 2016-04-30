@@ -110,13 +110,13 @@ func ConstantFolding(node syntree.Node) {
 	}
 }
 
-var vals map[string]int = nil
+var vals map[string]int = make(map[string]int)
 var containsLeftAssign bool = false
 var CONST_PROPAGATED bool = false
 
 func ConstantPropagation(node syntree.Node) {
 	if node != nil {
-		if node.IsCompound() {
+		if node.IsIteration() || node.IsSelection() {
 			vals = make(map[string]int)
 		}
 		for _, n := range node.Children() {
@@ -133,32 +133,59 @@ func ConstantPropagation(node syntree.Node) {
 				delete(vals, id)
 			}
 		}
-		if node.IsId() {
+		if node.IsId() && node.IsArray() == false {
 			id := node.Name()
 			parent := node.Parent()
-			children := []int{}
-			for i, c := range parent.Children() {
-				if c == node {
-					children = append(children, i)
-				}
-			}
-
-			for _, idx := range children {
-				if node.Parent().IsAssign() && idx == 0 {
-					containsLeftAssign = true
+			if parent != nil {
+				if parent.IsCall() && parent.Name() != "output" {
+					/*
+						sib := node
+						var prevSib syntree.Node = nil
+						for sib != nil {
+							value, ok := vals[sib.Name()]
+							if ok == true {
+								if sib.Parent() != nil {
+									newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
+									newNode.SetSibling(sib.Sibling())
+									sib.Parent().Children()[0] = newNode
+									sib = newNode
+								} else {
+									newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
+									newNode.SetSibling(sib.Sibling())
+									prevSib.SetSibling(newNode)
+									sib = newNode
+								}
+							}
+							prevSib = sib
+							sib = sib.Sibling()
+						}
+					*/
 				} else {
-					value, ok := vals[id]
-					if ok == true {
-						newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
-						node.Parent().Children()[idx] = newNode
-						log.OptLog.Printf("new node %+v", newNode)
-						CONST_PROPAGATED = true
+					children := []int{}
+					for i, c := range parent.Children() {
+						if c == node {
+							children = append(children, i)
+						}
+					}
+
+					for _, idx := range children {
+						if node.Parent().IsAssign() && idx == 0 {
+							containsLeftAssign = true
+						} else {
+							value, ok := vals[id]
+							if ok == true {
+								newNode := syntree.NewExpConstNode(node.Pos().Row(), node.Pos().Col(), value)
+								node.Parent().Children()[idx] = newNode
+								log.OptLog.Printf("new node %+v", newNode)
+								CONST_PROPAGATED = true
+							}
+						}
 					}
 				}
 			}
 		}
 		if node.IsCompound() {
-			vals = nil
+			vals = make(map[string]int)
 		}
 		ConstantPropagation(node.Sibling())
 	}
