@@ -1,6 +1,18 @@
+void deadA(int x, int y)
+{
+  output(x);
+  output(y);
+}
+
 void test(int x)
 {
   output(x);
+}
+
+void deadB(int x, int y)
+{
+  output(x);
+  output(y);
 }
 
 void main(void)

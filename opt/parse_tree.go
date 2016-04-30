@@ -164,6 +164,44 @@ func ConstantPropagation(node syntree.Node) {
 	}
 }
 
+var funcMap map[string]bool = make(map[string]bool)
+
+func FindDeadFuncs(node syntree.Node) {
+	if node != nil {
+		if node.IsFunc() {
+			funcMap[node.Name()] = false
+			if node.Name() == "main" {
+				funcMap[node.Name()] = true
+			}
+		}
+		for _, n := range node.Children() {
+			FindDeadFuncs(n)
+		}
+		if node.IsCall() {
+			funcMap[node.Name()] = true
+		}
+		FindDeadFuncs(node.Sibling())
+	}
+}
+
+func RemoveDeadFuncs(node syntree.Node) bool {
+	var removeRoot bool = false
+	var prevNode syntree.Node = nil
+	for node != nil {
+		if funcMap[node.Name()] == false {
+			log.OptLog.Printf("removing dead function %+v", node)
+			if prevNode != nil {
+				prevNode.SetSibling(node.Sibling())
+			} else {
+				removeRoot = true
+			}
+		}
+		prevNode = node
+		node = node.Sibling()
+	}
+	return removeRoot
+}
+
 var funcNode syntree.Node = nil
 
 func TailRecursion(node syntree.Node) {

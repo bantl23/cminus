@@ -17,6 +17,15 @@ func OptConstantPropagation(node syntree.Node) {
 	log.OptLog.Printf("<= Optimize constant propagation")
 }
 
+func OptDeadFunctionRemoval(node syntree.Node) bool {
+	log.OptLog.Printf("=> Optimize remove dead functions")
+	var removeRoot = false
+	FindDeadFuncs(node)
+	removeRoot = RemoveDeadFuncs(node)
+	log.OptLog.Printf("<= Optimize remove dead functions")
+	return removeRoot
+}
+
 func OptConstantFoldingAndConstantPropagation(node syntree.Node) {
 	CONST_FOLDED = true
 	CONST_PROPAGATED = true
