@@ -26,7 +26,7 @@ func main() {
 	trace_analyze := false
 	trace_optimize := false
 	trace_codegen := false
-	optimize := true
+	optimize := false
 
 	app := cli.NewApp()
 	app.Name = "cminus"
@@ -98,7 +98,7 @@ func main() {
 			Usage:       "Print machine code",
 			Destination: &print_machine_code,
 		},
-		cli.BoolTFlag{
+		cli.BoolFlag{
 			Name:        "optimize",
 			Usage:       "Enable or disable optimization",
 			Destination: &optimize,
