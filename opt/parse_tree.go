@@ -293,17 +293,20 @@ func RemoveDeadVars(node syntree.Node) {
 			var sib syntree.Node = firstVar
 			var prevSib syntree.Node = nil
 			for sib != nil {
-				if varMap[sib.Name()] == false {
-					if sib.Parent() != nil {
-						log.OptLog.Printf("removing %+v", sib)
-						if sib.Sibling() != nil {
-							sib.Sibling().SetParent(sib.Parent())
+				_, ok := varMap[sib.Name()]
+				if ok == true {
+					if varMap[sib.Name()] == false {
+						if sib.Parent() != nil {
+							log.OptLog.Printf("removing %+v", sib)
+							if sib.Sibling() != nil {
+								sib.Sibling().SetParent(sib.Parent())
+							} else {
+								sib.Parent().Children()[0] = nil
+							}
 						} else {
-							sib.Parent().Children()[0] = nil
+							log.OptLog.Printf("removing %+v", sib)
+							prevSib.SetSibling(sib.Sibling())
 						}
-					} else {
-						log.OptLog.Printf("removing %+v", sib)
-						prevSib.SetSibling(sib.Sibling())
 					}
 				}
 				prevSib = sib
@@ -314,6 +317,7 @@ func RemoveDeadVars(node syntree.Node) {
 			for sib != nil {
 				if sib.IsAssign() {
 					if sib.Children() != nil {
+						log.OptLog.Printf("varMapAgain %+v", varMap)
 						_, ok := varMap[sib.Children()[0].Name()]
 						if ok == true {
 							if varMap[sib.Children()[0].Name()] == false {
