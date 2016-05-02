@@ -156,6 +156,7 @@ func main() {
 						if removeRoot == true {
 							rootNode = rootNode.Sibling()
 						}
+						opt.OptDeadVariableRemoval(rootNode)
 						if print_parse_tree == true {
 							fmt.Println(">>>>")
 							syntree.PrintNode(rootNode, 0)

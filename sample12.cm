@@ -4,8 +4,20 @@ void deadA(int x, int y)
   output(y);
 }
 
+int get(void)
+{
+  return 2;
+}
+
 void test(int x)
 {
+  int i;
+  int j;
+  int k;
+  i = 1;
+  j = get();
+  k = 3;
+  output(j);
   output(x);
 }
 

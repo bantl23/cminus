@@ -229,7 +229,22 @@ func RemoveDeadFuncs(node syntree.Node) bool {
 	return removeRoot
 }
 
+var idList []string = []string{}
+
+func ContainsId(node syntree.Node) {
+	if node != nil {
+		for _, n := range node.Children() {
+			ContainsId(n)
+		}
+		if node.IsId() {
+			idList = append(idList, node.Name())
+		}
+		ContainsId(node.Sibling())
+	}
+}
+
 var firstVar syntree.Node = nil
+var firstStatement syntree.Node = nil
 var varMap map[string]bool = make(map[string]bool)
 
 func RemoveDeadVars(node syntree.Node) {
@@ -237,6 +252,7 @@ func RemoveDeadVars(node syntree.Node) {
 		if node.IsCompound() {
 			if node.Children() != nil {
 				firstVar = node.Children()[0]
+				firstStatement = node.Children()[1]
 				sib := node.Children()[0]
 				for sib != nil {
 					varMap[sib.Name()] = false
@@ -250,60 +266,70 @@ func RemoveDeadVars(node syntree.Node) {
 		for _, n := range node.Children() {
 			RemoveDeadVars(n)
 		}
-		if node.IsId() {
-			if node.Parent().IsAssign() && node.Parent().Children()[0] == node {
-			} else {
-				_, ok := varMap[node.Name()]
+		if node.IsCall() {
+			idList = []string{}
+			ContainsId(node)
+			for _, i := range idList {
+				_, ok := varMap[i]
 				if ok == true {
-					varMap[node.Name()] = true
+					varMap[i] = true
+				}
+			}
+		}
+		if node.IsAssign() {
+			if node.Children() != nil && node.Children()[1] != nil {
+				idList = []string{}
+				ContainsId(node.Children()[1])
+				for _, i := range idList {
+					_, ok := varMap[i]
+					if ok == true {
+						varMap[i] = true
+					}
 				}
 			}
 		}
 		if node.IsCompound() {
-			sib := firstVar
+			log.OptLog.Printf("vars %+v", varMap)
+			var sib syntree.Node = firstVar
 			var prevSib syntree.Node = nil
 			for sib != nil {
 				if varMap[sib.Name()] == false {
 					if sib.Parent() != nil {
-						parent := sib.Parent()
-						next := sib.Sibling()
-						parent.Children()[0] = next
-						if next != nil {
-							next.SetParent(parent)
+						log.OptLog.Printf("removing %+v", sib)
+						if sib.Sibling() != nil {
+							sib.Sibling().SetParent(sib.Parent())
+						} else {
+							sib.Parent().Children()[0] = nil
 						}
 					} else {
+						log.OptLog.Printf("removing %+v", sib)
 						prevSib.SetSibling(sib.Sibling())
 					}
 				}
 				prevSib = sib
 				sib = sib.Sibling()
 			}
-			if len(node.Children()) >= 1 {
-				var prevSib syntree.Node = nil
-				sib := node.Children()[1]
-				for sib != nil {
-					log.OptLog.Printf("=== %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
-					if varMap[sib.Children()[0].Name()] == false {
-						if sib.IsAssign() {
-							if sib.Parent() != nil {
-								parent := sib.Parent()
-								next := sib.Sibling()
-								log.OptLog.Printf("+++ %+v %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling(), parent.Children()[1])
-								parent.Children()[1] = next
-								if next != nil {
-									next.SetParent(parent)
+			sib = firstStatement
+			prevSib = nil
+			for sib != nil {
+				if sib.IsAssign() {
+					if sib.Children() != nil {
+						_, ok := varMap[sib.Children()[0].Name()]
+						if ok == true {
+							if varMap[sib.Children()[0].Name()] == false {
+								if sib.Parent() != nil {
+									log.OptLog.Printf("removing %+v", sib)
+									sib.Sibling().SetParent(sib.Parent())
+								} else {
+									log.OptLog.Printf("removing %+v", sib)
+									prevSib.SetSibling(sib.Sibling())
 								}
-								log.OptLog.Printf("+++ %+v %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling(), parent.Children()[1])
-							} else {
-								log.OptLog.Printf("||| %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
-								prevSib.SetSibling(sib.Sibling())
 							}
 						}
 					}
-					log.OptLog.Printf("=== %+v %+v %+v %+v", sib, sib.Parent(), prevSib, sib.Sibling())
-					prevSib = sib
-					sib = sib.Sibling()
 				}
+				prevSib = sib
+				sib = sib.Sibling()
 			}
 			varMap = make(map[string]bool)
 		}
